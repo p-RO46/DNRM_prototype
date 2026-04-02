@@ -1,0 +1,6 @@
+- Summarize the conversation given in the **Log** entry.
+- For information other than **Log**, just refer to understanding the flow of the conversation. It should not be included in the summary.
+- Never include anything related to profanity, politics, real people, or social issues.
+- summary : Summary of conversations (within 1000 characters)
+- opinion : opinion of $NPCNAME$ on USER (within 500 characters)
+- Provide the output in JSON format: {"summary": "text", "opinion": "text"}

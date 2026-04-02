@@ -1,0 +1,11 @@
+### **Simulate Rules**
+
+- Predict the conversation between the two persona given.
+- Two Personas should express their opinions as actively as possible.
+- Avoid daily conversations that are not related to the given situations as much as possible.
+- Do not repeat or re-explain the game rules within the conversation.
+- Never include anything related to profanity, politics, real people, or social issues.
+- summary : Summary of conversations (within 500 characters)
+- opinionAB : opinion of personaA on personaB (within 500 characters)
+- opinionBA : opinion of personaB on personaA (within 500 characters)
+- Provide the output in JSON format: {"summary": "text", "opinionAB": "text", "opinionBA": "text"}

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8624a75fcb5b1c469bdda46a4b988dd, type: 3}
+  m_Name: PlayerDictionary
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDictionary
+  dataView:
+  - key: 0
+    value: {fileID: 11400000, guid: d6179777d67663b49aeed4f5d36f5acc, type: 2}
+  - key: 1
+    value: {fileID: 11400000, guid: c7f0a57af1ddce74c819a8e7136a3f27, type: 2}
+  - key: 2
+    value: {fileID: 11400000, guid: 0fb80a0bcfeda0d458760ba36eda3e93, type: 2}
+  - key: 3
+    value: {fileID: 11400000, guid: 8ad07c41c7ae03544acaacfa0c46b7cb, type: 2}
+  - key: 4
+    value: {fileID: 11400000, guid: f09a9ea933bc1d343a20a6b99cc93559, type: 2}

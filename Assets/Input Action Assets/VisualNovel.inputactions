@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "name": "VisualNovel",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "b19eefa9-c86e-44de-85d7-a2d07cfe5bbc",
+            "actions": [
+                {
+                    "name": "Submit",
+                    "type": "Button",
+                    "id": "dfaf93ca-d06a-41e7-a16d-f5ed1ec1b9ff",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "d9e16695-5f1d-4d0d-8507-44823fb4cf17",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Submit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
