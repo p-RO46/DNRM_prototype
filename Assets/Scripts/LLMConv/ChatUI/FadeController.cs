@@ -4,46 +4,35 @@ using System.Collections;
 
 public class FadeController : MonoBehaviour
 {
-    [SerializeField] private GameObject panel;
+    [SerializeField] private Image uiImage;
     [SerializeField] private GameObject text;
-    private Image uiImage;
     private Material uiMaterial;
     [SerializeField] private float duration = 1.0f;
 
-    public bool isFadeOut = false;
-    public bool isFadeIn = false;
+    public bool isLoading = false;
 
     void Awake()
     {
-        uiImage = panel.GetComponent<Image>();
-        // .material을 호출하면 해당 오브젝트만을 위한 머티리얼 복제본(instanced)이 생성됩니다.
         uiMaterial = uiImage.material;
     }
 
     public void FadeOut()
     {
-        // 0에서 1까지 Shader의 _Alpha 값을 변화시키는 로직 (예시)
-        StartCoroutine(FadeOutAnim());
+        if (isLoading)
+        {
+            isLoading = false;
+            StopAllCoroutines();
+            StartCoroutine(FadeOutAnim());
+        }
     }
 
     public void FadeIn()
     {
-        // 0에서 1까지 Shader의 _Alpha 값을 변화시키는 로직 (예시)
-        StartCoroutine(FadeInAnim());
-    }
-
-    private void Update()
-    {
-        if (isFadeOut)
+        if (!isLoading)
         {
-            FadeOut();
-            isFadeOut = false;
-        }
-
-        if (isFadeIn)
-        {
-            FadeIn();
-            isFadeIn = false;
+            isLoading = true;
+            StopAllCoroutines();
+            StartCoroutine(FadeInAnim());
         }
     }
 
@@ -73,16 +62,18 @@ public class FadeController : MonoBehaviour
             yield return null;
         }
 
-        panel.SetActive(false);
+        GetComponent<Canvas>().enabled = false;
     }
 
     private IEnumerator FadeInAnim()
     {
-        panel.SetActive(true);
+        GetComponent<Canvas>().enabled = true;
 
         float elapsed = 0;
         while (elapsed < duration)
         {
+            if (uiMaterial.GetFloat("_Alpha") >= 1) break;
+
             elapsed += Time.deltaTime;
             float value = Mathf.Lerp(0, 1, elapsed / duration);
             uiMaterial.SetFloat("_Alpha", value);

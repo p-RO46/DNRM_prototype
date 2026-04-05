@@ -2,6 +2,7 @@ using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum TextSpeed
 {
@@ -13,8 +14,15 @@ public enum TextSpeed
 public class ChattingUI : MonoBehaviour
 {
     [Header("Text Speed")]
-    public TextSpeed textSpeed = TextSpeed.MEDIUM;
-    public float speedArg = 0.05f;
+    [SerializeField] private TextSpeed textSpeed = TextSpeed.MEDIUM;
+    [SerializeField] private float speedArg = 0.05f;
+
+    [SerializeField] private SoundManager SEManager;
+
+    [SerializeField] private Toggle FastToggle;
+    [SerializeField] private Toggle MediumToggle;
+    [SerializeField] private Toggle SlowToggle;
+
     [SerializeField] private float indicatorSpeed = 0.5f;
 
     private TextMeshProUGUI textBox;
@@ -38,8 +46,16 @@ public class ChattingUI : MonoBehaviour
         sb.Clear();
         for(int i = 0; i < fullText.Length; i++)
         {
-            textBox.text = sb.ToString();
             sb.Append(fullText[i]);
+            textBox.text = sb.ToString();
+            if (UnityEngine.Random.Range(0, 2) == 0)
+            {
+                SEManager.PlayClipOneShot(AC.SE_KEY01);
+            }
+            else
+            {
+                SEManager.PlayClipOneShot(AC.SE_KEY02);
+            }
             yield return new WaitForSeconds((float)textSpeed * speedArg);
         }
     }
@@ -65,6 +81,22 @@ public class ChattingUI : MonoBehaviour
             count--;
 
             yield return new WaitForSeconds(indicatorSpeed);
+        }
+    }
+
+    public void SetSpeed()
+    {
+        if (FastToggle.isOn)
+        {
+            textSpeed = TextSpeed.FAST;
+        }
+        else if (MediumToggle.isOn)
+        {
+            textSpeed = TextSpeed.MEDIUM;
+        }
+        else if (SlowToggle.isOn)
+        {
+            textSpeed = TextSpeed.SLOW;
         }
     }
 }

@@ -1,11 +1,12 @@
 using LLMUnity;
+using Newtonsoft.Json;
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
-using Newtonsoft.Json;
 
 [Serializable]
 public class DialogueReply
@@ -45,6 +46,17 @@ public class SummarizeReply
     public string opinion;
 }
 
+[Serializable]
+public class Vote
+{
+    public string voter;
+    public string vote;
+}
+public class VoteReply
+{
+    public List<Vote> result;
+}
+
 public class MessageSystem : MonoBehaviour
 {
     [Header("DataBase")]
@@ -52,19 +64,30 @@ public class MessageSystem : MonoBehaviour
 
     [Header("Current NPC")]
     public NpcInformation currentNpc;
+    private string currentNpcName = "";
 
     [Header("UI Contents")]
     [SerializeField] private MeshRenderer npcImage;
     [SerializeField] private TMP_InputField inputField;
     [SerializeField] private TextMeshProUGUI nameField;
     public ChattingUI chattingUI;
+    [SerializeField] private PoolManager poolManager; // 프리팹 꺼내다 쓰는 곳
+    [SerializeField] private GameObject logBoxPrefab;
+    [SerializeField] private Transform logContent;
+    // NPC들의 투표 결과를 반환
+    public List<VoteResult> voteResult = new List<VoteResult>();
 
     [Header("LLM Option")]
-    public bool useOpenAI = false; // false: local, true: OpenAI
-    public LLMAgent localLlmAgent;
+    [SerializeField] private bool useOpenAI = false; // false: local, true: OpenAI
+    [SerializeField] private LLMAgent localLlmAgent;
+    [SerializeField] private int maximumTokens = 5000;
 
     private INpcChatClient client;
     private bool isProcessing = false; // 중복 요청 방지 플래그
+
+    public bool isDialogueFinished = true;
+
+    private List<string> tempLog = new List<string>();
 
     private void Start()
     {
@@ -76,6 +99,15 @@ public class MessageSystem : MonoBehaviour
         {
             client = new LocalNpcChatClient(localLlmAgent);
         }
+    }
+
+    private void DialogueFinished()
+    {
+        string result = string.Join("\n", tempLog);
+        List<int> tokens = localLlmAgent.llm.llmService.Tokenize(result);
+        Debug.Log($"텍스트 토큰 수: {tokens.Count}");
+
+        if (tokens.Count > maximumTokens) isDialogueFinished = true;
     }
 
     #region Dialogue Request
@@ -139,12 +171,25 @@ public class MessageSystem : MonoBehaviour
                     // standingImage = replyData.expression; 어쩌구
                     chattingUI.PrintText(replyData.dialogue);
 
-                    string path = Path.Combine(Application.persistentDataPath, "Data", "Common", "log.txt");
-                    string content1 = $"USER: {jsonData}";
-                    string content2 = $"{currentNpc.name}: {replyData.dialogue}";
+                    GameObject logBox1 = poolManager.Get(logBoxPrefab);
+                    logBox1.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
+                    logBox1.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
+                    logBox1.transform.SetParent(logContent);
+                    logBox1.transform.localScale = new Vector3(1f, 1f, 1f);
 
-                    AppendLog(path, content1);
-                    AppendLog(path, content2);
+                    GameObject logBox2 = poolManager.Get(logBoxPrefab);
+                    logBox2.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{playerDB.dictionary[Player.USER].npcName}]";
+                    logBox2.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = input;
+                    logBox2.transform.SetParent(logContent);
+                    logBox2.transform.localScale = new Vector3(1f, 1f, 1f);
+
+                    string content1 = $"USER: {jsonData}";
+                    string content2 = $"{currentNpcName}: {replyData.dialogue}";
+
+                    tempLog.Add(content1);
+                    tempLog.Add(content2);
+
+                    DialogueFinished(); // 토큰 사용량 체크하기.
                 }
                 catch (System.Exception e)
                 {
@@ -177,8 +222,12 @@ public class MessageSystem : MonoBehaviour
         // 1. 이미 처리 중이면 무시
         if (isProcessing) return;
 
+        await localLlmAgent.ClearHistory();
+
         // System Prompt 설정은 한 번만 하기
         currentNpc = playerDB.dictionary[current];
+        currentNpcName = currentNpc.player.ToString();
+
         localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc);
         npcImage.material = currentNpc.image;
         nameField.text = $"[{currentNpc.npcName}]";
@@ -235,6 +284,10 @@ public class MessageSystem : MonoBehaviour
 
                     // standingImage = replyData.expression; 어쩌구
                     chattingUI.PrintText(replyData.dialogue);
+                    GameObject logBox = poolManager.Get(logBoxPrefab);
+                    logBox.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
+                    logBox.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
+                    logBox.transform.SetParent(logContent);
                 }
                 catch (System.Exception e)
                 {
@@ -268,6 +321,8 @@ public class MessageSystem : MonoBehaviour
         // 1. 이미 처리 중이면 무시
         // 근데 이게 다른거 처리중일때도 무시해야하니까? MessageSystem에 묶어야 할 것 같긴 함
         if (isProcessing) return;
+
+        await localLlmAgent.ClearHistory();
 
         localLlmAgent.systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B);
 
@@ -329,7 +384,7 @@ public class MessageSystem : MonoBehaviour
                     SaveTextToFile(pathA, opinionAB);
                     SaveTextToFile(pathB, opinionBA);
 
-                    // Debug.Log($"저장 완료: {pathA}");
+                    Debug.Log($"저장 완료: {pathA}");
                 }
                 catch (System.Exception e)
                 {
@@ -362,6 +417,8 @@ public class MessageSystem : MonoBehaviour
         
         // 1. 이미 처리 중이면 무시
         if (isProcessing) return;
+
+        await localLlmAgent.ClearHistory();
 
         localLlmAgent.systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc);
 
@@ -399,16 +456,14 @@ public class MessageSystem : MonoBehaviour
                     SummarizeReply replyData = JsonConvert.DeserializeObject<SummarizeReply>(reply_json);
 
                     // 저장할 파일 경로 설정 (Application.persistentDataPath는 플랫폼별 저장 경로)
-                    string summaryA = Application.persistentDataPath + $"/Assets/Resources/{currentNpc.name}/opinion/USER";
-                    string summaryB = Application.persistentDataPath + $"/Assets/Resources/USER/summary/{currentNpc.name}";
-                    string path = Application.persistentDataPath + $"/Assets/Resources/{currentNpc.name}/opinion/USER";
+                    string sPath = Path.Combine(Application.persistentDataPath, "Data", $"{currentNpcName}", "summary", $"USER.txt");
+                    string oPath = Path.Combine(Application.persistentDataPath, "Data", $"{currentNpcName}", "opinion", $"USER.txt");
 
                     string summary = replyData.summary;
                     string opinion = replyData.opinion;
                     // 파일 쓰기
-                    File.WriteAllText(summaryA, summary);
-                    File.WriteAllText(summaryB, summary);
-                    File.WriteAllText(path, opinion);
+                    File.WriteAllText(sPath, summary);
+                    File.WriteAllText(oPath, opinion);
 
                     Debug.Log("Summarize: 파일 저장 완료!");
                 }
@@ -430,12 +485,114 @@ public class MessageSystem : MonoBehaviour
         finally
         {
             isProcessing = false;
+
+        }
+    }
+
+    public async Awaitable DialogueSave()
+    {
+        string result = string.Join("\n", tempLog);
+        string path = Path.Combine(Application.persistentDataPath, "Data", "Common", "log.txt");
+        SaveTextToFile(path, result);
+
+        foreach(Transform child in logContent)
+        {
+            child.SetParent(null);
+            child.GetComponent<PooledObject>().ReturnToPool();
+        }
+
+        tempLog.Clear();
+        await RequestSummarize();
+    }
+    #endregion
+
+    #region Vote Request
+    public async Awaitable RequestVote()
+    {
+        // 1. 이미 처리 중이면 무시
+        if (isProcessing) return;
+
+        await localLlmAgent.ClearHistory();
+
+        localLlmAgent.systemPrompt = PromptBuilder.BuildVotePrompt();
+        string jsonData = "Please provide the vote result in JSON format.";
+
+        try
+        {
+            isProcessing = true;
+
+            // 2. 서버 요청
+            ChatResponse response = await client.AskNpc(jsonData);
+
+            // 3. 결과 처리
+            if (response != null && !string.IsNullOrEmpty(response.reply))
+            {
+                string reply_json = response.reply;
+
+                // 1. 정규표현식을 사용하여 { } 구조만 추출
+                // { 로 시작해서 } 로 끝나는 가장 큰 덩어리를 찾습니다.
+                var match = Regex.Match(reply_json, @"\{.*\}", RegexOptions.Singleline);
+
+                if (match.Success)
+                {
+                    reply_json = match.Value;
+                }
+                else
+                {
+                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    return;
+                }
+
+                try
+                {
+                    VoteReply replyData = JsonConvert.DeserializeObject<VoteReply>(reply_json);
+                    string[] keys = { "USER", "AFURE", "CHENYI", "SIGRID", "VIREO" };
+                    // LINQ의 ToDictionary 사용
+                    Dictionary<string, int> voteData = keys.ToDictionary(key => key, key => 0);
+                    foreach(Vote v in replyData.result)
+                    {
+                        if (voteData.ContainsKey(v.vote))
+                        {
+                            // 이미 있으면 1표 증가
+                            voteData[v.vote]++;
+                        }
+                        else
+                        {
+                            // 없으면 새로 추가
+                            voteData.Add(v.vote, 1);
+                        }
+                    }
+
+                    voteResult.Clear();
+                    foreach (KeyValuePair<string, int> entry in voteData)
+                    {
+                        voteResult.Add(new VoteResult { name = entry.Key, count = entry.Value });
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Vote 파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Vote: 대답을 듣지 못했습니다.");
+                // chattingUI.PrintText("대답을 듣지 못했습니다. 다시 시도해주세요.");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"vote 중 오류 발생: {e.Message}");
+        }
+        finally
+        {
+            isProcessing = false;
         }
     }
     #endregion
 
     // --- 헬퍼 함수 ---
-    private void SaveTextToFile(string fullPath, string content)
+    public void SaveTextToFile(string fullPath, string content)
     {
         try
         {
@@ -455,32 +612,6 @@ public class MessageSystem : MonoBehaviour
         catch (System.Exception e)
         {
             Debug.LogError($"파일 저장 실패: {e.Message}");
-        }
-    }
-
-    public static void AppendLog(string fullPath, string content)
-    {
-        try
-        {
-            // 1. 폴더가 없으면 생성
-            string directoryPath = Path.GetDirectoryName(fullPath);
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            // 2. 로그에 시간 정보 추가 (예: [2026-04-03 10:30:15] 내용)
-            // string timeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            string logLine = $"{content}{Environment.NewLine}";
-
-            // 3. 파일의 끝에 내용 추가 (파일이 없으면 새로 생성함)
-            File.AppendAllText(fullPath, logLine);
-
-            // Debug.Log($"Log saved to: {fullPath}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"로그 기록 실패: {e.Message}");
         }
     }
 }

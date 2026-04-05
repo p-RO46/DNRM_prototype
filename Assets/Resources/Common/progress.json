@@ -6,6 +6,6 @@
         {"SIGIRD": 0},
         {"VIREO": 0}
     ],
-    "current_conversation_partner":"DEFAULT",
+    "current_conversation_partner":"$DEFAULT$",
     "current_round":1
 }

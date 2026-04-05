@@ -9,4 +9,5 @@ public enum Player
     CHENYI,
     SIGRID,
     VIREO,
+    REST,
 }

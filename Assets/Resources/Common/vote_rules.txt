@@ -1,0 +1,17 @@
+### **Vote Rules**
+
+- Each NPC must select exactly one target.
+- The target must be one of the following:
+USER, SIGRID, CHENYI, VIREO, AFURE
+- Each NPC has their own personality.
+- **You must output the vote for ALL four NPCs simultaneously.**
+- Do not explain your reasoning. Only return the structured result.
+- Provide the output in JSON format: 
+{
+    "result": [
+        {"voter": "AFURE", vote": "USER | AFURE | CHENYI | SIGRID | VIREO"},
+        {"voter": "CHENYI", vote": "USER | AFURE | CHENYI | SIGRID | VIREO"},
+        {"voter": "SIGRID", vote": "USER | AFURE | CHENYI | SIGRID | VIREO"},
+        {"voter": "VIREO", vote": "USER | AFURE | CHENYI | SIGRID | VIREO"}
+    ]
+}

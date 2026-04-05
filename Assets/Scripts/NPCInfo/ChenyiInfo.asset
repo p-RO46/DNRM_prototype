@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ChenyiInfo
   m_EditorClassIdentifier: Assembly-CSharp::NpcInformation
   player: 2
-  npcName: Chen Yi
+  npcName: Chen-Yi
   deathCount: 3
   isAlive: 1
   persona: {fileID: 4900000, guid: fb18b42fb4c94bb4faa6834440017ab3, type: 3}
