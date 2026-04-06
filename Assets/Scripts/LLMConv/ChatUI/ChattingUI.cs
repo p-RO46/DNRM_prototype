@@ -48,14 +48,7 @@ public class ChattingUI : MonoBehaviour
         {
             sb.Append(fullText[i]);
             textBox.text = sb.ToString();
-            if (UnityEngine.Random.Range(0, 2) == 0)
-            {
-                SEManager.PlayClipOneShot(AC.SE_KEY01);
-            }
-            else
-            {
-                SEManager.PlayClipOneShot(AC.SE_KEY02);
-            }
+            SEManager.PlayKeyOneShot();
             yield return new WaitForSeconds((float)textSpeed * speedArg);
         }
     }

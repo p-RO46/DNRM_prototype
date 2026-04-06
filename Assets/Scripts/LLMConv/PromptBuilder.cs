@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -28,6 +30,39 @@ public static class PromptBuilder
         return _progress;
     }
 
+    private static string ReadPrevConv(string npcName)
+    {
+        List<string> players = new List<string> { "USER", "AFURE", "CHENYI", "VIREO", "SIGRID" };
+        string result = "";
+        string prevConvPlayer = "";
+        string summary = "";
+        string opinion = "";
+        foreach (string player in players)
+        {
+            if (npcName.Equals(player)) continue;
+
+            string path1 = Path.Combine(Application.persistentDataPath, "Data", npcName, "summary", $"{player}.txt");
+            Debug.Log("summary 확인: " + path1);
+            string _summary = ReadFileToText(path1);
+            if (string.IsNullOrEmpty(_summary))
+            {
+                prevConvPlayer += $"{player}, ";
+                summary += $"**Summary of Conversation with {player}**\n{_summary}\n\n";
+            }
+
+            string path2 = Path.Combine(Application.persistentDataPath, "Data", npcName, "opinion", $"{player}.txt");
+            Debug.Log("opinion 확인: " + path1);
+            string _opinion = ReadFileToText(path2);
+            if (string.IsNullOrEmpty(_opinion))
+            {
+                opinion += $"**Opinion about {player}**\n{_opinion}\n\n";
+            }
+        }
+
+        result = $"\n\n**Previous Conversation Partner**: {prevConvPlayer}\n\n{summary}{opinion}";
+        return result;
+    }
+
     #region Dialogue Prompt
     public static string BuildDialoguePrompt(NpcInformation npc)
     {
@@ -42,8 +77,10 @@ public static class PromptBuilder
 
         // Debug.Log(npcName);
         TextAsset _persona = Resources.Load<TextAsset>($"{npcName}/persona");
+
         // TextAsset _memory_status = Resources.Load<TextAsset>("Data/Example");
         // TextAsset _log = Resources.Load<TextAsset>("Data/Example"); 얘는 user_input 사이드?
+        string _prevConv = ReadPrevConv(npcName);
         /// Log: local은 자동저장인데, OpenAI는 아님
         /// 데모는 local이니까 일단나중에 (어차피 OpenAI로 할거면 서버에다 넣을거)
         string _conversation_rules = Resources.Load<TextAsset>("Common/conversation_rules").text;
@@ -53,6 +90,7 @@ public static class PromptBuilder
         sb.Append(_situation.text);
         sb.Append(_progress);
         sb.Append(_persona.text);
+        sb.Append(_prevConv);
         sb.Append(_conversation_rules);
 
         return sb.ToString();
@@ -150,7 +188,7 @@ public static class PromptBuilder
     #endregion
 
     #region Vote Prompt
-    public static string BuildVotePrompt()
+    public static string BuildVotePrompt(List<string> candidates)
     {
         StringBuilder sb = new StringBuilder();
         string path;
@@ -190,7 +228,27 @@ public static class PromptBuilder
         sb.Append(_allNpc);
         sb.Append(_vote_rules);
 
-        return sb.ToString();
+        string result = sb.ToString();
+        string candidateList = "";
+        foreach(string cand in candidates)
+        {
+            candidateList += $"{cand}, ";
+        }
+        string candidateOr = "";
+        foreach (string cand in candidates)
+        {
+            candidateOr += $"{cand}|";
+        }
+        candidateList.Substring(0, candidateList.Length - 2);
+        Debug.Log(candidateList);
+
+        candidateOr.Substring(0, candidateOr.Length - 1);
+        Debug.Log(candidateOr);
+
+        result = result.Replace("$CANDIDATELIST$", candidateList);
+        result = result.Replace("$CANDIDATEOR$", candidateOr);
+
+        return result;
     }
     #endregion
 

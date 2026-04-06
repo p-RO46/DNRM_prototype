@@ -14,7 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NpcInformation
   player: 4
   npcName: Vireo
-  deathCount: 3
   isAlive: 1
-  persona: {fileID: 0}
-  image: {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  expressions:
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}
+  - {fileID: 2100000, guid: 168836c0f8a409b41b7e4a898a3180ad, type: 2}

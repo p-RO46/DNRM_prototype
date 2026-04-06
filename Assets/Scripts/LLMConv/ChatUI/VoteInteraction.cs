@@ -1,17 +1,23 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
+// 투표 시 사망자 처리 필요
+[Serializable]
 public class VoteResult
 {
     public string name;
     public int count;
 }
+
+[Serializable]
 public class ProgressJson
 {
     public List<VoteResult> number_of_drug_administered;
@@ -19,9 +25,19 @@ public class ProgressJson
     public int current_round;
 }
 
+[Serializable]
+public class PlayerLamp
+{
+    public Player player = Player.USER;
+    public int lampCount = 0;
+    public TextMeshProUGUI nameText;
+    public List<Image> lampImages;
+}
+
 public class VoteInteraction : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("UI")] 
+    [SerializeField] private Canvas voteMainUI;
     [SerializeField] private FadeController fadeController;
     [SerializeField] private Canvas electorUI;
     [SerializeField] private TextMeshProUGUI electorText;
@@ -29,6 +45,10 @@ public class VoteInteraction : MonoBehaviour
     [Header("Vote Result UI")]
     [SerializeField] private Canvas voteResultUI;
     [SerializeField] private List<TextMeshProUGUI> voteCounts = new List<TextMeshProUGUI>();
+    [SerializeField] private List<PlayerLamp> playerLamp = new List<PlayerLamp>();
+    [SerializeField] private Material lampOn;
+    [SerializeField] private Material lampOff;
+    [SerializeField] private Material lampDown;
 
     [Header("Vote Toggles")]
     [SerializeField] private Canvas voteToggleUI; // Parent
@@ -39,7 +59,8 @@ public class VoteInteraction : MonoBehaviour
     [SerializeField] private MessageSystem messageSystem;
 
     private string playerVote = "USER";
-    private bool isRevote = false;
+    [SerializeField] private bool isRevote = false;
+    [SerializeField] private bool isTie = false;
 
     public Player elector;
     [SerializeField]
@@ -62,7 +83,7 @@ public class VoteInteraction : MonoBehaviour
             {
                 playerVote = t.gameObject.name;
                 OkButton.interactable = true;
-                break;
+                return;
             }
         }
         OkButton.interactable = false;
@@ -71,7 +92,9 @@ public class VoteInteraction : MonoBehaviour
     // 투표를 시작하는 메서드
     public void StartVote()
     {
+        voteMainUI.enabled = true;
         voteToggleUI.enabled = true;
+        voteResultUI.enabled = false;
         foreach(Toggle t in toggles)
         {
             // 1. 일단 전부 interactable을 비활성화
@@ -80,6 +103,7 @@ public class VoteInteraction : MonoBehaviour
             {
                 if (t.gameObject.name.Equals(candidate))
                 {
+                    Debug.Log("ToggleName: "+ t.gameObject.name + " CandName: " + candidate);
                     // 2. 후보 라인업에 있으면 interactable 활성화
                     t.interactable = true;
                     break;
@@ -93,10 +117,11 @@ public class VoteInteraction : MonoBehaviour
     {
         // 0. 투표 토글 닫기
         voteToggleUI.enabled = false;
+        voteResultUI.enabled = false;
         fadeController.FadeIn();
 
         // 1. NPC들의 투표 결과를 받아온다.
-        await messageSystem.RequestVote();
+        await messageSystem.RequestVote(candidates);
 
         // 2. USER의 표를 더한다.
         foreach (VoteResult result in messageSystem.voteResult)
@@ -117,7 +142,8 @@ public class VoteInteraction : MonoBehaviour
             foreach (TextMeshProUGUI count in voteCounts)
             {
                 string str = count.gameObject.name;
-                str = str.Substring(str.Length - 5);
+                str = str.Substring(0, str.Length - 5).ToUpper();
+                Debug.Log("UpdateCount: " + str);
 
                 if (result.name.Equals(str))
                 {
@@ -127,7 +153,29 @@ public class VoteInteraction : MonoBehaviour
             }
         }
 
-        // 3. 동률을 검사한다.
+        isTie = false;
+
+        // 3. 최고 득표자를 찾는다.
+        string maximum = "USER";
+        for (int i = 0; i < 5; i++)
+        {
+            // 0표면 득표 검사 xxx
+            if (messageSystem.voteResult[i].count == 0) continue;
+
+            for (int j = i + 1; j < 5; j++)
+            {
+                if (messageSystem.voteResult[i].count > messageSystem.voteResult[j].count)
+                {
+                    maximum = messageSystem.voteResult[i].name;
+                }
+                else
+                {
+                    maximum = messageSystem.voteResult[j].name;
+                }
+            }
+        }
+
+        // 4. 동률을 검사한다.
         revoteCands.Clear();
         for(int i = 0; i < 5; i++)
         {
@@ -143,53 +191,48 @@ public class VoteInteraction : MonoBehaviour
                 }
             }
         }
+
+        foreach (string cand in revoteCands)
+        {
+            if (cand.Equals(maximum)) 
+            {
+                isTie = true;
+                return;
+            }
+        }
+        elector = (Player)Enum.Parse(typeof(Player), maximum);
     }
 
     public void NextButtonClicked()
     {
-        // 3-1. 동률 여부를 검사한다.
-        if(revoteCands.Count == 0)
+        if(!isTie)
         {
-            // 3-1-1. 동률이 아니라면, 최고 득표자를 선출자로 결정한다.
-            string maximum = "USER";
-            for (int i = 0; i < 5; i++)
-            {
-                // 0표면 득표 검사 xxx
-                if (messageSystem.voteResult[i].count == 0) continue;
-
-                for (int j = i + 1; j < 5; j++)
-                {
-                    if (messageSystem.voteResult[i].count > messageSystem.voteResult[j].count)
-                    {
-                        maximum = messageSystem.voteResult[i].name;
-                    }
-                    else
-                    {
-                        maximum = messageSystem.voteResult[j].name;
-                    }
-                }
-            }
-
-            elector = (Player)Enum.Parse(typeof(Player), maximum);
+            // 4-1. 동률이 아니라면, 최고 득표자를 선출자로 결정한다.
+            voteToggleUI.enabled = false;
             voteResultUI.enabled = false;
-            electorText.text = elector.ToString();
             electorUI.enabled = true;
+            electorText.text = elector.ToString();
             return;
         }
 
-        // 3-2. 동률일 시, 재투표 여부를 검사한다.
+        // 4-2. 동률일 시, 재투표 여부를 검사한다.
         // 후보 라인업을 재투표 버전으로 바꿔준다.
-        candidates = new List<string>(revoteCands);
+        candidates = new List<string>(revoteCands).Distinct().ToList();
         if (isRevote)
         {
-            // 3-2-1. 재투표라면, 동률 리스트에서 한 명을 랜덤하게 선출한다.
+            // 4-2-1. 재투표라면, 동률 리스트에서 한 명을 랜덤하게 선출한다.
             isRevote = false;
             int index = UnityEngine.Random.Range(0, candidates.Count);
             elector = (Player)Enum.Parse(typeof(Player), candidates[index]);
+
+            voteToggleUI.enabled = false;
+            voteResultUI.enabled = false;
+            electorUI.enabled = true;
+            electorText.text = elector.ToString();
         }
         else
         {
-            // 3-2-2. 재투표가 아니라면, 동률 리스트를 대상으로 재투표를 진행한다.
+            // 4-2-2. 재투표가 아니라면, 동률 리스트를 대상으로 재투표를 진행한다.
             isRevote = true;
             StartVote();
         }
@@ -197,8 +240,11 @@ public class VoteInteraction : MonoBehaviour
 
     public void ElectorOKClicked()
     {
+        voteResultUI.enabled = false;
+        voteToggleUI.enabled = false;
+        voteMainUI.enabled = false;
+        StartCoroutine(LampOnRoutine());
         UpdateProgress();
-        SceneManager.LoadScene("GameScene");
     }
 
     private void UpdateProgress()
@@ -217,5 +263,60 @@ public class VoteInteraction : MonoBehaviour
 
         string jsonData = JsonUtility.ToJson(progress);
         messageSystem.SaveTextToFile(path, jsonData);
+    }
+
+    private IEnumerator LampOnRoutine()
+    {
+        PlayerLamp electedLamp = new PlayerLamp();
+        foreach(PlayerLamp p in playerLamp)
+        {
+            if(p.player == elector)
+            {
+                electedLamp = p;
+                break;
+            }
+        }
+
+        if(electedLamp.lampCount < 2)
+        {
+            // 살아있음
+            Image lampImage = electedLamp.lampImages[electedLamp.lampCount++];
+            yield return StartCoroutine(FadeAlpha(1, 0, 1f, lampImage));
+            lampImage.material = lampOn;
+            yield return StartCoroutine(FadeAlpha(0, 0.5f, 1f, lampImage));
+            yield return StartCoroutine(FadeAlpha(0.5f, 0.2f, 0.5f, lampImage));
+            yield return StartCoroutine(FadeAlpha(0.2f, 1, 0.5f, lampImage));
+        }
+        else
+        {
+            // 죽음
+            electedLamp.nameText.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            for(int i = electedLamp.lampImages.Count - 1; i >= 0; i++)
+            {
+                Image lampImage = electedLamp.lampImages[i];
+                yield return StartCoroutine(FadeAlpha(1, 0, 0.7f, lampImage));
+                lampImage.material = lampDown;
+                yield return StartCoroutine(FadeAlpha(0, 1f, 0.3f, lampImage));
+            }
+        }
+
+        // 화면 전환
+        yield return new WaitForSeconds(1f);
+        yield return StartCoroutine(fadeController.FadeOutAnim());
+        SceneManager.LoadScene("GameScene");
+    }
+
+    private IEnumerator FadeAlpha(float start, float end, float duration, Image img)
+    {
+        float elapsed = 0f;
+        Color c = img.color;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            c.a = Mathf.Lerp(start, end, elapsed / duration);
+            img.color = c;
+            yield return null;
+        }
     }
 }

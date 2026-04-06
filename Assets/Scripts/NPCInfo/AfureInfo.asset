@@ -14,7 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NpcInformation
   player: 1
   npcName: Afure
-  deathCount: 3
   isAlive: 1
-  persona: {fileID: 0}
-  image: {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  expressions:
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}

@@ -36,7 +36,7 @@ public class FadeController : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeOutAnim()
+    public IEnumerator FadeOutAnim()
     {
         float elapsed = 0;
         while (elapsed < duration)
@@ -65,7 +65,7 @@ public class FadeController : MonoBehaviour
         GetComponent<Canvas>().enabled = false;
     }
 
-    private IEnumerator FadeInAnim()
+    public IEnumerator FadeInAnim()
     {
         GetComponent<Canvas>().enabled = true;
 

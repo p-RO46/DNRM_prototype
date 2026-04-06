@@ -172,14 +172,14 @@ public class MessageSystem : MonoBehaviour
                     chattingUI.PrintText(replyData.dialogue);
 
                     GameObject logBox1 = poolManager.Get(logBoxPrefab);
-                    logBox1.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
-                    logBox1.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
+                    logBox1.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{playerDB.dictionary[Player.USER].npcName}]"; 
+                    logBox1.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = input;
                     logBox1.transform.SetParent(logContent);
                     logBox1.transform.localScale = new Vector3(1f, 1f, 1f);
 
                     GameObject logBox2 = poolManager.Get(logBoxPrefab);
-                    logBox2.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{playerDB.dictionary[Player.USER].npcName}]";
-                    logBox2.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = input;
+                    logBox2.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
+                    logBox2.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
                     logBox2.transform.SetParent(logContent);
                     logBox2.transform.localScale = new Vector3(1f, 1f, 1f);
 
@@ -229,7 +229,7 @@ public class MessageSystem : MonoBehaviour
         currentNpcName = currentNpc.player.ToString();
 
         localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc);
-        npcImage.material = currentNpc.image;
+        npcImage.material = currentNpc.expressions[(int)Expression.DEFAULT];
         nameField.text = $"[{currentNpc.npcName}]";
 
         // 사용자가 Enter 키를 눌렀을 때 호출
@@ -282,12 +282,19 @@ public class MessageSystem : MonoBehaviour
                 {
                     DialogueReply replyData = JsonConvert.DeserializeObject<DialogueReply>(reply_json);
 
-                    // standingImage = replyData.expression; 어쩌구
+                    Expression currentExpression = (Expression)Enum.Parse(typeof(Expression), replyData.expression.ToUpper());
+                    npcImage.material = currentNpc.expressions[(int)currentExpression];
+
                     chattingUI.PrintText(replyData.dialogue);
                     GameObject logBox = poolManager.Get(logBoxPrefab);
                     logBox.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
                     logBox.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
                     logBox.transform.SetParent(logContent);
+
+                    string content2 = $"{currentNpcName}: {replyData.dialogue}";
+
+                    tempLog.Add(content2);
+
                 }
                 catch (System.Exception e)
                 {
@@ -497,7 +504,7 @@ public class MessageSystem : MonoBehaviour
 
         foreach(Transform child in logContent)
         {
-            child.SetParent(null);
+            // child.SetParent(null);
             child.GetComponent<PooledObject>().ReturnToPool();
         }
 
@@ -507,14 +514,14 @@ public class MessageSystem : MonoBehaviour
     #endregion
 
     #region Vote Request
-    public async Awaitable RequestVote()
+    public async Awaitable RequestVote(List<string> candidates)
     {
         // 1. 이미 처리 중이면 무시
         if (isProcessing) return;
 
         await localLlmAgent.ClearHistory();
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildVotePrompt();
+        localLlmAgent.systemPrompt = PromptBuilder.BuildVotePrompt(candidates);
         string jsonData = "Please provide the vote result in JSON format.";
 
         try
@@ -528,6 +535,7 @@ public class MessageSystem : MonoBehaviour
             if (response != null && !string.IsNullOrEmpty(response.reply))
             {
                 string reply_json = response.reply;
+                Debug.Log(reply_json);
 
                 // 1. 정규표현식을 사용하여 { } 구조만 추출
                 // { 로 시작해서 } 로 끝나는 가장 큰 덩어리를 찾습니다.
@@ -558,8 +566,19 @@ public class MessageSystem : MonoBehaviour
                         }
                         else
                         {
-                            // 없으면 새로 추가
-                            voteData.Add(v.vote, 1);
+                            // 없으면 자기 자신 투표로 간주.
+                            // 지 이름도 오타내면 어떡함?
+                            if (voteData.ContainsKey(v.voter))
+                            {
+                                voteData[v.voter]++;
+                            }
+                            else
+                            {
+                                // 랜덤으로 돌려야만
+                                List<string> randKey = voteData.Keys.ToList(); // 값을 리스트로 변환
+                                int _index = UnityEngine.Random.Range(0, randKey.Count);
+                                voteData[randKey[_index]]++;
+                            }
                         }
                     }
 

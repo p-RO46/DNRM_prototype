@@ -36,6 +36,19 @@ public class SoundManager : MonoBehaviour, ISerializationCallbackReceiver
         GetComponent<AudioSource>().PlayOneShot(data[name]);
     }
 
+    public void PlayKeyOneShot()
+    {
+        int rand = Random.Range(0, 2);
+        if (rand == 0)
+        {
+            GetComponent<AudioSource>().PlayOneShot(data[AC.SE_KEY01]);
+        }
+        else
+        {
+            GetComponent<AudioSource>().PlayOneShot(data[AC.SE_KEY02]);
+        }
+    }
+
     public void OnBeforeSerialize() { }
     public void OnAfterDeserialize()
     {

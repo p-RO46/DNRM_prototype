@@ -23,6 +23,7 @@ public class DialogueManager : MonoBehaviour
     [Header("UI Controller")]
     [SerializeField] private FadeController fadeController;
     [SerializeField] private VoteInteraction voteInteraction;
+    [SerializeField] private Canvas dialogueUI;
 
     [Header("LLM")]
     [SerializeField] private MessageSystem messageSystem; // LLM에게 Request를 보낼 수 있는 객체. 싱글톤으로 만들어야 하는데...
@@ -113,11 +114,13 @@ public class DialogueManager : MonoBehaviour
                 /// 이제 대화를 Event로 지속해야 하는데,
                 /// 조건이 false인 동안 계속 다음 프레임으로 넘김
                 messageSystem.isDialogueFinished = false;
+                dialogueUI.enabled = true;
                 BGMManager.ChangeClip(AC.BGM_LONG);
                 while (!messageSystem.isDialogueFinished)
                 {
                     await Awaitable.NextFrameAsync();
                 }
+                dialogueUI.enabled = false;
 
                 /// 탈출 이후에 NPC가 끝내는 말 해야하는데 이건 그냥 고정으로 할까
                 /// 요청을 쓸데없이 한 번 더 보내는 느낌이라. 그냥 고정멘트 달아두는게 좋겠다
@@ -136,6 +139,12 @@ public class DialogueManager : MonoBehaviour
         }
 
         // 최종 뺑이가 끝나면 vote 시작.
+        fadeController.FadeOut();
         voteInteraction.StartVote();
+    }
+
+    public void EndDialogue()
+    {
+        messageSystem.isDialogueFinished = true;
     }
 }

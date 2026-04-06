@@ -14,7 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NpcInformation
   player: 3
   npcName: Sigrid
-  deathCount: 3
   isAlive: 1
-  persona: {fileID: 0}
-  image: {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  expressions:
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
+  - {fileID: 2100000, guid: a07442c5021dfb741bc4ceb1e3e04444, type: 2}
