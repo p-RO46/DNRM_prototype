@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -42,18 +40,18 @@ public static class PromptBuilder
             if (npcName.Equals(player)) continue;
 
             string path1 = Path.Combine(Application.persistentDataPath, "Data", npcName, "summary", $"{player}.txt");
-            Debug.Log("summary 확인: " + path1);
+            // Debug.Log("summary 확인: " + path1);
             string _summary = ReadFileToText(path1);
-            if (string.IsNullOrEmpty(_summary))
+            if (!string.IsNullOrEmpty(_summary))
             {
                 prevConvPlayer += $"{player}, ";
                 summary += $"**Summary of Conversation with {player}**\n{_summary}\n\n";
             }
 
             string path2 = Path.Combine(Application.persistentDataPath, "Data", npcName, "opinion", $"{player}.txt");
-            Debug.Log("opinion 확인: " + path1);
+            // Debug.Log("opinion 확인: " + path2);
             string _opinion = ReadFileToText(path2);
-            if (string.IsNullOrEmpty(_opinion))
+            if (!string.IsNullOrEmpty(_opinion))
             {
                 opinion += $"**Opinion about {player}**\n{_opinion}\n\n";
             }
@@ -64,7 +62,7 @@ public static class PromptBuilder
     }
 
     #region Dialogue Prompt
-    public static string BuildDialoguePrompt(NpcInformation npc)
+    public static string BuildDialoguePrompt(NpcInformation npc, int round)
     {
         StringBuilder sb = new StringBuilder();
         string npcName = npc.player.ToString();
@@ -78,6 +76,15 @@ public static class PromptBuilder
         // Debug.Log(npcName);
         TextAsset _persona = Resources.Load<TextAsset>($"{npcName}/persona");
 
+        string _memory_common = "";
+        for (int i= 1; i <= round; i++)
+        {
+            _memory_common += Resources.Load<TextAsset>($"Common/memory/round_{round}").text + "\n\n";
+        }
+        string _memory_npc = Resources.Load<TextAsset>($"{npcName}/memory/round_{round}").text;
+
+        string _memory = $"\n### Common Memory\n\n{_memory_common}\n\n### {npcName}'s Personal Memory\n\n{_memory_npc}\n\n";
+
         // TextAsset _memory_status = Resources.Load<TextAsset>("Data/Example");
         // TextAsset _log = Resources.Load<TextAsset>("Data/Example"); 얘는 user_input 사이드?
         string _prevConv = ReadPrevConv(npcName);
@@ -89,8 +96,11 @@ public static class PromptBuilder
         sb.Append(_role.text);
         sb.Append(_situation.text);
         sb.Append(_progress);
+
         sb.Append(_persona.text);
+        sb.Append(_memory);
         sb.Append(_prevConv);
+
         sb.Append(_conversation_rules);
 
         return sb.ToString();
@@ -98,7 +108,7 @@ public static class PromptBuilder
     #endregion
 
     #region Simulate Prompt
-    public static string BuildSimulatePrompt(Player A, Player B)
+    public static string BuildSimulatePrompt(Player A, Player B, int round)
     {
         StringBuilder sb = new StringBuilder();
         string npcNameA = A.ToString();
@@ -126,24 +136,36 @@ public static class PromptBuilder
 
         TextAsset _simulate_rules = Resources.Load<TextAsset>("Common/simulate_rules");
 
+        string _memory_common = Resources.Load<TextAsset>($"Common/memory/round_{round}").text;
+        string _memoryC = $"\n### Common Memory\n\n{_memory_common}\n\n";
+
+        string _memory_npcA = Resources.Load<TextAsset>($"{npcNameA}/memory/round_{round}").text;
+        string _memory_npcB = Resources.Load<TextAsset>($"{npcNameB}/memory/round_{round}").text;
+
+        string _memoryA = $"\n### {npcNameA}'s Personal Memory\n\n{_memory_npcA}\n\n";
+        string _memoryB = $"\n### {npcNameB}'s Personal Memory\n\n{_memory_npcB}\n\n";
+
         sb.Append(_role.text);
         sb.Append(_situation.text);
         sb.Append(_progress);
+
+        sb.Append(_memoryC);
 
         sb.Append("\n### **Summary of previous conversations between A and B**\n\n");
         sb.Append(_summary);
 
         sb.Append("\n### **Persona A**\n");
         sb.Append(_personaA.text);
+        sb.Append(_memoryA);
         sb.Append("\n### **Opinion of Persona A on Perona B**\n");
         sb.Append(_opinionAB);
 
         sb.Append("\n### **Persona B**\n");
         sb.Append(_personaB.text);
+        sb.Append(_memoryB);
         sb.Append("\n### **Opinion of Persona B on Perona A**\n");
         sb.Append(_opinionBA);
         sb.Append("\n");
-
         sb.Append(_simulate_rules.text);
 
         return sb.ToString();
@@ -151,7 +173,7 @@ public static class PromptBuilder
     #endregion
 
     #region Summarize Prompt
-    public static string BuildSummarizePrompt(NpcInformation npc)
+    public static string BuildSummarizePrompt(NpcInformation npc, int round)
     {
         StringBuilder sb = new StringBuilder();
         string npcName = npc.player.ToString();
@@ -174,11 +196,17 @@ public static class PromptBuilder
         string _summarize_rules = Resources.Load<TextAsset>("Common/summarize_rules").text;
         _summarize_rules = _summarize_rules.Replace("$NPCNAME$", npcName);
 
+        string _memory_common = Resources.Load<TextAsset>($"Common/memory/round_{round}").text;
+        string _memory_npc = Resources.Load<TextAsset>($"{npcName}/memory/round_{round}").text;
+
+        string _memory = $"\n### Common Memory\n\n{_memory_common}\n\n### {npcName}'s Personal Memory\n\n{_memory_npc}\n\n";
+
         sb.Append(_role);
         sb.Append(_situation.text);
         sb.Append(_progress);
         sb.Append("\n### NPC Persona\n\n");
         sb.Append(_persona_short.text);
+        sb.Append(_memory);
         sb.Append("\n### **Log**\n\n");
         sb.Append(_log);
         sb.Append(_summarize_rules);
@@ -240,10 +268,10 @@ public static class PromptBuilder
             candidateOr += $"{cand}|";
         }
         candidateList.Substring(0, candidateList.Length - 2);
-        Debug.Log(candidateList);
+        // Debug.Log(candidateList);
 
         candidateOr.Substring(0, candidateOr.Length - 1);
-        Debug.Log(candidateOr);
+        // Debug.Log(candidateOr);
 
         result = result.Replace("$CANDIDATELIST$", candidateList);
         result = result.Replace("$CANDIDATEOR$", candidateOr);
@@ -265,20 +293,28 @@ public static class PromptBuilder
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
-                Debug.Log($"폴더 생성됨: {directoryPath}");
+                // Debug.Log($"폴더 생성됨: {directoryPath}");
 
                 // 파일 쓰기
                 File.WriteAllText(fullPath, "");
             }
+
+            // 2. 파일이 존재하는지 확인
+            if (File.Exists(fullPath))
+            {
+                // 파일이 있으면 읽기
+                result = File.ReadAllText(fullPath);
+            }
             else
             {
-                // 파일 읽기
-                result = File.ReadAllText(fullPath);
+                // 파일이 없으면 빈 파일 생성 (또는 기본값 저장)
+                File.WriteAllText(fullPath, "");
+                // Debug.Log($"빈 파일 생성됨: {fullPath}");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"파일 읽기 실패: {e.Message}");
+            // Debug.LogError($"파일 읽기 실패: {e.Message}");
         }
 
         return result;

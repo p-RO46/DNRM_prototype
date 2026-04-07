@@ -16,9 +16,9 @@ MonoBehaviour:
   npcName: Chen-Yi
   isAlive: 1
   expressions:
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
-  - {fileID: 2100000, guid: 707d0c5064298d34ab6bdcb835bad461, type: 2}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 261912314, guid: 97692449d133aef408fbf99020d93463, type: 3}

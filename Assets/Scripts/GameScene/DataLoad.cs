@@ -19,13 +19,15 @@ public class DataLoad : MonoBehaviour
     [SerializeField] private Material lampOff;
     [SerializeField] private Material lampDown;
 
-    [Header("Fade Controller")]
-    [SerializeField] private FadeController fadeController;
-
     private void Start()
     {
         ReadProgress();
         LampOn();
+    }
+
+    private void Update()
+    {
+        PlayTimer.TotalPlayTime += Time.deltaTime;
     }
 
     public void ReadProgress()
@@ -41,12 +43,13 @@ public class DataLoad : MonoBehaviour
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
-                Debug.Log($"폴더 생성됨: {directoryPath}");
+                // Debug.Log($"폴더 생성됨: {directoryPath}");
             }
 
             // 파일 쓰기
             if (!File.Exists(fullPath))
             {
+                // Debug.LogError("progress가 존재하지 않습니다!");
                 string initialProgress = Resources.Load<TextAsset>("Common/progress").text;
                 File.WriteAllText(fullPath, initialProgress);
             }
@@ -56,7 +59,7 @@ public class DataLoad : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"파일 읽기 실패: {e.Message}");
+            // Debug.LogError($"파일 읽기 실패: {e.Message}");
             return;
         }
 

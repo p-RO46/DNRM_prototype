@@ -1,22 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+public class RenderTextureRaycaster : MonoBehaviour
 {
     public Camera targetCamera; // 렌더 텍스처를 찍고 있는 카메라
     private RawImage rawImage;
 
-    private Transform selectedObject = null;
+    public Transform selectedObject = null;
 
     [SerializeField] private ChattingUI chattingUI;
     [SerializeField] private Canvas messageBox;
     [SerializeField] private Canvas selectionButton;
     [SerializeField] private GameObject playerManager;
+
+    [SerializeField] private GraphicRaycaster screenTouch;
 
     [SerializeField] private FadeController fadeController;
 
@@ -30,9 +33,11 @@ public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPoin
         rawImage = GetComponent<RawImage>();
         playerManager.SetActive(false);
     }
-    public async void OnPointerClick(PointerEventData eventData)
+
+    public async void OnButtonClick()
     {
-        if (selectedObject != null)
+        screenTouch.enabled = false;
+        if (selectedObject != null && !selectedObject.IsUnityNull())
         {
             if (selectedObject.name.Equals("Chair"))
             {
@@ -45,57 +50,19 @@ public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPoin
             else
             {
                 selectedObject = null;
+                screenTouch.enabled = true;
                 return;
             }
 
-            MeshRenderer outline = selectedObject.Find("Outline").GetComponent<MeshRenderer>();
-            outline.enabled = false;
+            if (selectedObject != null && !selectedObject.IsUnityNull())
+            {
+                MeshRenderer outline = selectedObject.Find("Outline").GetComponent<MeshRenderer>();
+                outline.enabled = false;
 
-            selectedObject = null;
+                selectedObject = null;
+            }
         }
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        // 1. Raw Image 내에서의 클릭 좌표를 0~1 사이의 값(UV)으로 변환
-        Vector2 localPoint;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            rawImage.rectTransform,
-            eventData.position,
-            eventData.pressEventCamera,
-            out localPoint
-        );
-
-        // Rect 좌표를 (0,0)~(1,1) 범위의 Viewport 좌표로 정규화
-        Rect rect = rawImage.rectTransform.rect;
-        float x = (localPoint.x - rect.x) / rect.width;
-        float y = (localPoint.y - rect.y) / rect.height;
-
-        Vector3 viewportPoint = new Vector3(x, y, 0);
-
-        // 2. 변환된 좌표를 사용하여 해당 카메라에서 레이 발사
-        Ray ray = targetCamera.ViewportPointToRay(viewportPoint);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit))
-        {
-            // Debug.Log("선택된 오브젝트: " + hit.collider.name);
-
-            selectedObject = hit.transform;
-            MeshRenderer outline = selectedObject.Find("Outline").GetComponent<MeshRenderer>();
-            outline.enabled = true;
-        }
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (selectedObject != null)
-        {
-            MeshRenderer outline = selectedObject.Find("Outline").GetComponent<MeshRenderer>();
-            outline.enabled = false;
-
-            selectedObject = null;
-        }
+        screenTouch.enabled = true;
     }
 
     public void WaitingEnd()
@@ -107,7 +74,7 @@ public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPoin
     {
         playerManager.SetActive(true);
         messageBox.enabled = true;
-        for(int i = 0; i<list.Count; i++)
+        for(int i = 0; i < list.Count; i++)
         {
             isWaiting = true;
             chattingUI.PrintText(list[i]);
@@ -115,13 +82,16 @@ public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPoin
             {
                 await Awaitable.NextFrameAsync();
             }
-            if(i == list.Count - 1)
-            {
-                playerManager.SetActive(false);
-                messageBox.enabled = false;
-                break;
-            }
         }
+
+        isWaiting = true;
+        while (isWaiting)
+        {
+            await Awaitable.NextFrameAsync();
+        }
+        playerManager.SetActive(false);
+        messageBox.enabled = false;
+        return;
     }
 
     [SerializeField] private Button button1;
@@ -162,7 +132,8 @@ public class RenderTextureRaycaster : MonoBehaviour, IPointerClickHandler, IPoin
 
     IEnumerator NextDialogue()
     {
-        yield return StartCoroutine(fadeController.FadeOutAnim());
+        fadeController.GetComponent<Canvas>().enabled = true;
+        yield return StartCoroutine(fadeController.FadeToBlack());
         SceneManager.LoadScene("ScreenScene");
     }
 

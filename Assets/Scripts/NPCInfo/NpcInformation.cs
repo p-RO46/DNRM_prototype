@@ -22,5 +22,5 @@ public class NpcInformation : ScriptableObject
     public bool isAlive = true;
 
     [Header("Graphic")]
-    public List<Material> expressions = new List<Material>();
+    public List<Sprite> expressions = new List<Sprite>();
 }

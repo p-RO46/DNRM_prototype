@@ -67,13 +67,14 @@ public class FadeController : MonoBehaviour
 
     public IEnumerator FadeInAnim()
     {
+        SetAlpha(0);
+        SetScroll(3);
+
         GetComponent<Canvas>().enabled = true;
 
         float elapsed = 0;
         while (elapsed < duration)
         {
-            if (uiMaterial.GetFloat("_Alpha") >= 1) break;
-
             elapsed += Time.deltaTime;
             float value = Mathf.Lerp(0, 1, elapsed / duration);
             uiMaterial.SetFloat("_Alpha", value);
@@ -94,5 +95,32 @@ public class FadeController : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    public IEnumerator FadeToBlack()
+    {
+        GetComponent<Canvas>().enabled = true;
+
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            if (uiMaterial.GetFloat("_Alpha") >= 1) break;
+
+            elapsed += Time.deltaTime;
+            float value = Mathf.Lerp(0, 1, elapsed / duration);
+            uiMaterial.SetFloat("_Alpha", value);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    public void SetAlpha(float alpha)
+    {
+        uiMaterial.SetFloat("_Alpha", alpha);
+    }
+    public void SetScroll(float scroll)
+    {
+        uiMaterial.SetFloat("_Scroll", scroll);
     }
 }

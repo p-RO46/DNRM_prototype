@@ -39,7 +39,9 @@ public class DialogueManager : MonoBehaviour
 
     private async void Start()
     {
-        // List<string> users = new List<string> { "USER", "CHENYI", "SIGRID", "VIREO", "AFURE" };
+        // users = new List<string> { "USER", "CHENYI", "SIGRID", "VIREO", "AFURE" };
+        dialogueUI.enabled = false;
+
         BGMManager.ChangeClip(AC.BGM_EMPTY);
         await GenerateSchedule(users);
     }
@@ -128,6 +130,7 @@ public class DialogueManager : MonoBehaviour
 
                 fadeController.FadeIn();
                 BGMManager.ChangeClip(AC.BGM_EMPTY);
+                messageSystem.tokenUsage.text = "0";
                 await messageSystem.DialogueSave();
             }
 

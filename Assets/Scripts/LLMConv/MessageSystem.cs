@@ -61,19 +61,21 @@ public class MessageSystem : MonoBehaviour
 {
     [Header("DataBase")]
     [SerializeField] private PlayerDictionary playerDB;
+    public DataLoad dataLoader;
 
     [Header("Current NPC")]
     public NpcInformation currentNpc;
     private string currentNpcName = "";
+    [SerializeField] private SpriteRenderer npcImage;
 
     [Header("UI Contents")]
-    [SerializeField] private MeshRenderer npcImage;
     [SerializeField] private TMP_InputField inputField;
     [SerializeField] private TextMeshProUGUI nameField;
     public ChattingUI chattingUI;
     [SerializeField] private PoolManager poolManager; // 프리팹 꺼내다 쓰는 곳
     [SerializeField] private GameObject logBoxPrefab;
     [SerializeField] private Transform logContent;
+    [SerializeField] public TextMeshProUGUI tokenUsage;
     // NPC들의 투표 결과를 반환
     public List<VoteResult> voteResult = new List<VoteResult>();
 
@@ -88,6 +90,8 @@ public class MessageSystem : MonoBehaviour
     public bool isDialogueFinished = true;
 
     private List<string> tempLog = new List<string>();
+    private Vector3 logPos = new Vector3(0, 0, 0);
+    private Vector3 logScale = new Vector3(1, 1, 1);
 
     private void Start()
     {
@@ -99,15 +103,23 @@ public class MessageSystem : MonoBehaviour
         {
             client = new LocalNpcChatClient(localLlmAgent);
         }
+
+        inputField.enabled = true;
     }
 
     private void DialogueFinished()
     {
         string result = string.Join("\n", tempLog);
         List<int> tokens = localLlmAgent.llm.llmService.Tokenize(result);
+        tokenUsage.text = tokens.Count.ToString();
         Debug.Log($"텍스트 토큰 수: {tokens.Count}");
 
-        if (tokens.Count > maximumTokens) isDialogueFinished = true;
+        if (tokens.Count > maximumTokens)
+        {
+            // isDialogueFinished = true;
+            inputField.enabled = false;
+            tokenUsage.color = Color.red;
+        }
     }
 
     #region Dialogue Request
@@ -160,28 +172,42 @@ public class MessageSystem : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    // Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
                     return;
                 }
 
                 try
                 {
+                    reply_json = FixJsonTypos(reply_json);
                     DialogueReply replyData = JsonConvert.DeserializeObject<DialogueReply>(reply_json);
 
-                    // standingImage = replyData.expression; 어쩌구
-                    chattingUI.PrintText(replyData.dialogue);
+                    if (Enum.TryParse(typeof(Expression), replyData.expression, true, out object currentExpression))
+                    {
+                        npcImage.sprite = currentNpc.expressions[(int)currentExpression];
+                    }
+                    else
+                    {
+                        npcImage.sprite = currentNpc.expressions[(int)Expression.DEFAULT];
+                    }
 
+                    chattingUI.PrintText(replyData.dialogue);
+                    Debug.Log(reply_json);
+
+                    // GameObject logBox1 = Instantiate(logBoxPrefab);
                     GameObject logBox1 = poolManager.Get(logBoxPrefab);
                     logBox1.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{playerDB.dictionary[Player.USER].npcName}]"; 
                     logBox1.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = input;
                     logBox1.transform.SetParent(logContent);
-                    logBox1.transform.localScale = new Vector3(1f, 1f, 1f);
+                    logBox1.transform.localPosition = logPos;
+                    logBox1.transform.localScale = logScale;
 
+                    // GameObject logBox2 = Instantiate(logBoxPrefab);
                     GameObject logBox2 = poolManager.Get(logBoxPrefab);
                     logBox2.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
                     logBox2.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
                     logBox2.transform.SetParent(logContent);
-                    logBox2.transform.localScale = new Vector3(1f, 1f, 1f);
+                    logBox2.transform.localPosition = logPos;
+                    logBox2.transform.localScale = logScale;
 
                     string content1 = $"USER: {jsonData}";
                     string content2 = $"{currentNpcName}: {replyData.dialogue}";
@@ -193,7 +219,7 @@ public class MessageSystem : MonoBehaviour
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                    // Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
                 }
             }
             else
@@ -203,7 +229,7 @@ public class MessageSystem : MonoBehaviour
         }
         catch(System.Exception e)
         {
-            Debug.LogError($"대화 중 오류 발생: {e.Message}");
+            // Debug.LogError($"대화 중 오류 발생: {e.Message}");
             chattingUI.PrintText("네트워크 상태가 불안정합니다.");
         }
         finally
@@ -228,8 +254,8 @@ public class MessageSystem : MonoBehaviour
         currentNpc = playerDB.dictionary[current];
         currentNpcName = currentNpc.player.ToString();
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc);
-        npcImage.material = currentNpc.expressions[(int)Expression.DEFAULT];
+        localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound);
+        npcImage.sprite = currentNpc.expressions[(int)Expression.DEFAULT];
         nameField.text = $"[{currentNpc.npcName}]";
 
         // 사용자가 Enter 키를 눌렀을 때 호출
@@ -274,19 +300,26 @@ public class MessageSystem : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    // Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
                     return;
                 }
 
                 try
                 {
+                    reply_json = FixJsonTypos(reply_json);
                     DialogueReply replyData = JsonConvert.DeserializeObject<DialogueReply>(reply_json);
 
-                    Expression currentExpression = (Expression)Enum.Parse(typeof(Expression), replyData.expression.ToUpper());
-                    npcImage.material = currentNpc.expressions[(int)currentExpression];
+                    if (Enum.TryParse(typeof(Expression), replyData.expression, true, out object currentExpression))
+                    {
+                        npcImage.sprite = currentNpc.expressions[(int)currentExpression];
+                    }
+                    else
+                    {
+                        npcImage.sprite = currentNpc.expressions[(int)Expression.DEFAULT];
+                    }
 
                     chattingUI.PrintText(replyData.dialogue);
-                    GameObject logBox = poolManager.Get(logBoxPrefab);
+                    GameObject logBox = Instantiate(logBoxPrefab);
                     logBox.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = $"[{currentNpcName}]";
                     logBox.transform.Find("Text").GetComponent<TextMeshProUGUI>().text = replyData.dialogue;
                     logBox.transform.SetParent(logContent);
@@ -298,7 +331,7 @@ public class MessageSystem : MonoBehaviour
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                    // Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
                 }
             }
             else
@@ -308,7 +341,7 @@ public class MessageSystem : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"대화 중 오류 발생: {e.Message}");
+            // Debug.LogError($"대화 중 오류 발생: {e.Message}");
             chattingUI.PrintText("네트워크 상태가 불안정합니다.");
         }
         finally
@@ -331,7 +364,7 @@ public class MessageSystem : MonoBehaviour
 
         await localLlmAgent.ClearHistory();
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B);
+        localLlmAgent.systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B, dataLoader.currentRound);
 
         //string persona = currentNpc.persona.text;
         string jsonData = "Please provide the simulation result in JSON format.";
@@ -363,7 +396,7 @@ public class MessageSystem : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    // Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
                     return;
                 }
 
@@ -391,22 +424,22 @@ public class MessageSystem : MonoBehaviour
                     SaveTextToFile(pathA, opinionAB);
                     SaveTextToFile(pathB, opinionBA);
 
-                    Debug.Log($"저장 완료: {pathA}");
+                    // Debug.Log($"저장 완료: {pathA}");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                    // Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError("Simulate: 대답을 받지 못했습니다.");
+                // Debug.LogError("Simulate: 대답을 받지 못했습니다.");
                 // chattingUI.PrintText("대답을 듣지 못했습니다. 다시 시도해주세요.");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Simulate 중 오류 발생: {e.Message}");
+            // Debug.LogError($"Simulate 중 오류 발생: {e.Message}");
             // chattingUI.PrintText("네트워크 상태가 불안정합니다.");
         }
         finally
@@ -427,7 +460,7 @@ public class MessageSystem : MonoBehaviour
 
         await localLlmAgent.ClearHistory();
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc);
+        localLlmAgent.systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc, dataLoader.currentRound);
 
         //string persona = currentNpc.persona.text;
         string jsonData = "Please provide the summarization result in JSON format.";
@@ -454,7 +487,7 @@ public class MessageSystem : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    // Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
                     return;
                 }
 
@@ -472,22 +505,22 @@ public class MessageSystem : MonoBehaviour
                     File.WriteAllText(sPath, summary);
                     File.WriteAllText(oPath, opinion);
 
-                    Debug.Log("Summarize: 파일 저장 완료!");
+                    // Debug.Log("Summarize: 파일 저장 완료!");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                    // Debug.LogError($"파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError("Summarize: 대답을 듣지 못했습니다.");
+                // Debug.LogError("Summarize: 대답을 듣지 못했습니다.");
                 // chattingUI.PrintText("대답을 듣지 못했습니다. 다시 시도해주세요.");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Summarize 중 오류 발생: {e.Message}");
+            // Debug.LogError($"Summarize 중 오류 발생: {e.Message}");
         }
         finally
         {
@@ -502,10 +535,22 @@ public class MessageSystem : MonoBehaviour
         string path = Path.Combine(Application.persistentDataPath, "Data", "Common", "log.txt");
         SaveTextToFile(path, result);
 
+        /*
         foreach(Transform child in logContent)
         {
             // child.SetParent(null);
             child.GetComponent<PooledObject>().ReturnToPool();
+        }
+        */
+
+        for (int i = logContent.childCount - 1; i >= 0; i--)
+        {
+            // 1. 일반 삭제일 경우
+            // Destroy(logContent.GetChild(i).gameObject);
+
+            // 2. 오브젝트 풀링을 사용 중일 경우 (PooledObject 스크립트가 있다고 가정)
+            var pooled = logContent.GetChild(i).GetComponent<PooledObject>();
+            if (pooled != null) pooled.ReturnToPool();
         }
 
         tempLog.Clear();
@@ -547,16 +592,16 @@ public class MessageSystem : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
+                    // Debug.LogError("응답에서 JSON 형태를 찾을 수 없습니다: " + reply_json);
                     return;
                 }
 
                 try
                 {
                     VoteReply replyData = JsonConvert.DeserializeObject<VoteReply>(reply_json);
-                    string[] keys = { "USER", "AFURE", "CHENYI", "SIGRID", "VIREO" };
+                    // string[] keys = { "USER", "AFURE", "CHENYI", "SIGRID", "VIREO" };
                     // LINQ의 ToDictionary 사용
-                    Dictionary<string, int> voteData = keys.ToDictionary(key => key, key => 0);
+                    Dictionary<string, int> voteData = candidates.ToDictionary(key => key, key => 0);
                     foreach(Vote v in replyData.result)
                     {
                         if (voteData.ContainsKey(v.vote))
@@ -566,19 +611,10 @@ public class MessageSystem : MonoBehaviour
                         }
                         else
                         {
-                            // 없으면 자기 자신 투표로 간주.
-                            // 지 이름도 오타내면 어떡함?
-                            if (voteData.ContainsKey(v.voter))
-                            {
-                                voteData[v.voter]++;
-                            }
-                            else
-                            {
-                                // 랜덤으로 돌려야만
-                                List<string> randKey = voteData.Keys.ToList(); // 값을 리스트로 변환
-                                int _index = UnityEngine.Random.Range(0, randKey.Count);
-                                voteData[randKey[_index]]++;
-                            }
+                            // 랜덤으로 돌려야만
+                            List<string> randKey = voteData.Keys.ToList(); // 값을 리스트로 변환
+                            int _index = UnityEngine.Random.Range(0, randKey.Count);
+                            voteData[randKey[_index]]++;
                         }
                     }
 
@@ -590,18 +626,18 @@ public class MessageSystem : MonoBehaviour
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"Vote 파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
+                    // Debug.LogError($"Vote 파싱 실패! 원문: {reply_json} / 에러: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError("Vote: 대답을 듣지 못했습니다.");
+                // Debug.LogError("Vote: 대답을 듣지 못했습니다.");
                 // chattingUI.PrintText("대답을 듣지 못했습니다. 다시 시도해주세요.");
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"vote 중 오류 발생: {e.Message}");
+            // Debug.LogError($"vote 중 오류 발생: {e.Message}");
         }
         finally
         {
@@ -622,7 +658,7 @@ public class MessageSystem : MonoBehaviour
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
-                Debug.Log($"폴더 생성됨: {directoryPath}");
+                // Debug.Log($"폴더 생성됨: {directoryPath}");
             }
 
             // 파일 쓰기
@@ -630,7 +666,14 @@ public class MessageSystem : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"파일 저장 실패: {e.Message}");
+            // Debug.LogError($"파일 저장 실패: {e.Message}");
         }
+    }
+
+    public string FixJsonTypos(string rawJson)
+    {
+        // 자주 발생하는 오타들을 정상적인 키로 치환
+        return rawJson
+            .Replace("\"dialogage\":", "\"dialogue\":");
     }
 }

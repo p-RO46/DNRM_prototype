@@ -16,9 +16,9 @@ MonoBehaviour:
   npcName: Afure
   isAlive: 1
   expressions:
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
-  - {fileID: 2100000, guid: f125e6f8bcd2b1c408162d762ed2d0ba, type: 2}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: -544589585, guid: 97692449d133aef408fbf99020d93463, type: 3}

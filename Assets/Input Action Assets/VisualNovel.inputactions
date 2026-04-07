@@ -55,6 +55,56 @@
                     "action": "Next",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6aeec842-fe9c-4453-a7ec-84ab25152210",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "15ea3063-8e73-497a-aef2-3aa076a7ccd0",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Exit",
+            "id": "ebc60c25-0a39-4e5d-a51e-a6b5dc2ae8cb",
+            "actions": [
+                {
+                    "name": "Game Exit",
+                    "type": "Button",
+                    "id": "790a076d-4b73-4d3c-870e-767af3bf6a73",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "bb28f1aa-90f3-4ab5-b0a7-a47df3ea8133",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Game Exit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }

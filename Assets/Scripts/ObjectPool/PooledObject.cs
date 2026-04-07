@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -15,14 +16,28 @@ public class PooledObject : MonoBehaviour
     // 스스로 풀로 돌아가는 함수
     public void ReturnToPool()
     {
-        if (_myPool != null)
+        try
         {
-            _myPool.Release(gameObject);
+            if (_myPool != null)
+            {
+                // 이미 비활성화되어 있다면(이미 풀에 반납되었다면) 무시
+                if (!gameObject.activeSelf) return;
+
+                // 풀 반납 로직 실행
+                // _myPool.Release(this.gameObject);
+                _myPool.Release(gameObject);
+            }
+            else
+            {
+                // 혹시라도 풀 소속이 아니면 그냥 파괴 (방어적 코드)
+                Destroy(gameObject);
+            }
         }
-        else
+        catch(Exception e)
         {
-            // 혹시라도 풀 소속이 아니면 그냥 파괴 (방어적 코드)
+            Debug.LogError(e.Message);
             Destroy(gameObject);
         }
+
     }
 }

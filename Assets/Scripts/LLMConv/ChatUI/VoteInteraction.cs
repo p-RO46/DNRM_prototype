@@ -1,3 +1,4 @@
+using LLMUnity;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -36,6 +37,9 @@ public class PlayerLamp
 
 public class VoteInteraction : MonoBehaviour
 {
+    [Header("Data Loader")]
+    [SerializeField] private DataLoad dataLoader;
+
     [Header("UI")] 
     [SerializeField] private Canvas voteMainUI;
     [SerializeField] private FadeController fadeController;
@@ -61,6 +65,8 @@ public class VoteInteraction : MonoBehaviour
     private string playerVote = "USER";
     [SerializeField] private bool isRevote = false;
     [SerializeField] private bool isTie = false;
+
+    [SerializeField] private LLMAgent llmAgent;
 
     public Player elector;
     [SerializeField]
@@ -103,7 +109,7 @@ public class VoteInteraction : MonoBehaviour
             {
                 if (t.gameObject.name.Equals(candidate))
                 {
-                    Debug.Log("ToggleName: "+ t.gameObject.name + " CandName: " + candidate);
+                    // Debug.Log("ToggleName: "+ t.gameObject.name + " CandName: " + candidate);
                     // 2. 후보 라인업에 있으면 interactable 활성화
                     t.interactable = true;
                     break;
@@ -136,6 +142,7 @@ public class VoteInteraction : MonoBehaviour
         // 2-1. 투표 결과 화면을 띄운다.
         fadeController.FadeOut();
         voteResultUI.enabled = true;
+
         // 2-1-1. 숫자를 업데이트 해 준다.
         foreach (VoteResult result in messageSystem.voteResult)
         {
@@ -143,7 +150,7 @@ public class VoteInteraction : MonoBehaviour
             {
                 string str = count.gameObject.name;
                 str = str.Substring(0, str.Length - 5).ToUpper();
-                Debug.Log("UpdateCount: " + str);
+                // Debug.Log("UpdateCount: " + str);
 
                 if (result.name.Equals(str))
                 {
@@ -154,24 +161,18 @@ public class VoteInteraction : MonoBehaviour
         }
 
         isTie = false;
-
         // 3. 최고 득표자를 찾는다.
         string maximum = "USER";
-        for (int i = 0; i < 5; i++)
+        int max = 0;
+        for (int i = 0; i < messageSystem.voteResult.Count; i++)
         {
             // 0표면 득표 검사 xxx
             if (messageSystem.voteResult[i].count == 0) continue;
 
-            for (int j = i + 1; j < 5; j++)
+            if (messageSystem.voteResult[i].count > max)
             {
-                if (messageSystem.voteResult[i].count > messageSystem.voteResult[j].count)
-                {
-                    maximum = messageSystem.voteResult[i].name;
-                }
-                else
-                {
-                    maximum = messageSystem.voteResult[j].name;
-                }
+                maximum = messageSystem.voteResult[i].name;
+                max = messageSystem.voteResult[i].count;
             }
         }
 
@@ -212,6 +213,10 @@ public class VoteInteraction : MonoBehaviour
             voteResultUI.enabled = false;
             electorUI.enabled = true;
             electorText.text = elector.ToString();
+
+            // 실제 저장 데이터에도 선출자의 표를 추가한다.
+            dataLoader.currentProgress.number_of_drug_administered[(int)elector].count ++;
+
             return;
         }
 
@@ -229,6 +234,9 @@ public class VoteInteraction : MonoBehaviour
             voteResultUI.enabled = false;
             electorUI.enabled = true;
             electorText.text = elector.ToString();
+
+            // 실제 저장 데이터에도 선출자의 표를 추가한다.
+            dataLoader.currentProgress.number_of_drug_administered[(int)elector].count++;
         }
         else
         {
@@ -243,8 +251,8 @@ public class VoteInteraction : MonoBehaviour
         voteResultUI.enabled = false;
         voteToggleUI.enabled = false;
         voteMainUI.enabled = false;
-        StartCoroutine(LampOnRoutine());
         UpdateProgress();
+        StartCoroutine(LampOnRoutine());
     }
 
     private void UpdateProgress()
@@ -256,12 +264,13 @@ public class VoteInteraction : MonoBehaviour
 
         ProgressJson progress = new ProgressJson
         {
-            number_of_drug_administered = messageSystem.voteResult,
+            number_of_drug_administered = dataLoader.currentProgress.number_of_drug_administered,
             current_conversation_partner = "$DEFAULT$",
-            current_round = oldProgress.current_round++
+            current_round = oldProgress.current_round + 1
         };
 
         string jsonData = JsonUtility.ToJson(progress);
+        // Debug.Log(jsonData);
         messageSystem.SaveTextToFile(path, jsonData);
     }
 
@@ -301,7 +310,6 @@ public class VoteInteraction : MonoBehaviour
         }
 
         // 화면 전환
-        yield return new WaitForSeconds(1f);
         yield return StartCoroutine(fadeController.FadeOutAnim());
         SceneManager.LoadScene("GameScene");
     }

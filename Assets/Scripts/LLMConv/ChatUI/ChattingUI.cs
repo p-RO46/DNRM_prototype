@@ -42,11 +42,11 @@ public class ChattingUI : MonoBehaviour
     // 문자열 받아서 UI에 순차적으로 띄우는거
     private IEnumerator PrintTextRoutine(string message)
     {
-        string fullText = message.Replace("\r\n", "\n");
+        // string fullText = message.Replace("\r\n", "\n");
         sb.Clear();
-        for(int i = 0; i < fullText.Length; i++)
+        for(int i = 0; i < message.Length; i++)
         {
-            sb.Append(fullText[i]);
+            sb.Append(message[i]);
             textBox.text = sb.ToString();
             SEManager.PlayKeyOneShot();
             yield return new WaitForSeconds((float)textSpeed * speedArg);
