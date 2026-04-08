@@ -8,4 +8,17 @@
 - summary : Summary of conversations (within 500 characters)
 - opinionAB : opinion of personaA on personaB (within 500 characters)
 - opinionBA : opinion of personaB on personaA (within 500 characters)
+
+Suspicion Rule:
+
+Characters constantly form opinions about others.
+They may label people as:
+
+- trustworthy
+- suspicious
+- useful
+- dangerous
+
+These judgments are subjective and may change as new information appears.
+
 - Provide the output in JSON format: {"summary": "text", "opinionAB": "text", "opinionBA": "text"}

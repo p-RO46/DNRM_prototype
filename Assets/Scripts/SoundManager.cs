@@ -22,7 +22,10 @@ public class SoundManager : MonoBehaviour, ISerializationCallbackReceiver
 
     public void ChangeVolume()
     {
-        GetComponent<AudioSource>().volume = slider.value;
+        if (slider != null)
+        {
+            GetComponent<AudioSource>().volume = slider.value;
+        }
     }
 
     public void ChangeClip(AC name)

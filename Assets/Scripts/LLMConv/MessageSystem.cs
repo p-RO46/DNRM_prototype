@@ -87,13 +87,14 @@ public class MessageSystem : MonoBehaviour
     [Header("LLM Option")]
     [SerializeField] private bool useOpenAI = false; // false: local, true: OpenAI
     [SerializeField] private LLMAgent localLlmAgent;
-    [SerializeField] private int maximumTokens = 5000;
+    [SerializeField] private int maximumCount = 30;
     public int totalUsage = 0;
 
     private INpcChatClient client;
     private bool isProcessing = false; // 중복 요청 방지 플래그
 
     public bool isDialogueFinished = true;
+    public VoteReply vote_reply_state = new VoteReply();
 
     private List<string> tempLog = new List<string>();
     private Vector3 logPos = new Vector3(0, 0, 0);
@@ -115,33 +116,13 @@ public class MessageSystem : MonoBehaviour
 
     private void DialogueFinished(int total_tokens)
     {
-        if (useOpenAI)
+        // 대화 횟수로.
+        totalUsage++;
+        if (totalUsage > maximumCount)
         {
-            totalUsage += total_tokens;
-            tokenUsage.text = totalUsage.ToString();
-            Debug.Log($"텍스트 토큰 수: {totalUsage}");
-
-            if (totalUsage > maximumTokens)
-            {
-                // isDialogueFinished = true;
-                inputField.enabled = false;
-                tokenUsage.color = Color.red;
-            }
-        }
-        else
-        {
-            string result = string.Join("\n", tempLog);
-            List<int> tokens = localLlmAgent.llm.llmService.Tokenize(result);
-            tokenUsage.text = tokens.Count.ToString();
-            Debug.Log($"텍스트 토큰 수: {tokens.Count}");
-
-            if (tokens.Count > maximumTokens)
-            {
-                // isDialogueFinished = true;
-                inputField.enabled = false;
-                tokenUsage.color = Color.red;
-
-            }
+            // isDialogueFinished = true;
+            inputField.enabled = false;
+            tokenUsage.color = Color.red;
         }
     }
 
@@ -164,6 +145,8 @@ public class MessageSystem : MonoBehaviour
             string systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound, tempLog);
             ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = input };
             jsonData = JsonUtility.ToJson(requestData);
+
+            Debug.Log(jsonData);
         }
         else
         {
@@ -233,7 +216,7 @@ public class MessageSystem : MonoBehaviour
                     logBox2.transform.localPosition = logPos;
                     logBox2.transform.localScale = logScale;
 
-                    string content1 = $"USER: {jsonData}";
+                    string content1 = $"USER: {input}";
                     string content2 = $"{currentNpcName}: {replyData.dialogue}";
 
                     tempLog.Add(content1);
@@ -651,6 +634,7 @@ public class MessageSystem : MonoBehaviour
                 try
                 {
                     VoteReply replyData = JsonConvert.DeserializeObject<VoteReply>(reply_json);
+                    vote_reply_state = replyData;
                     // string[] keys = { "USER", "AFURE", "CHENYI", "SIGRID", "VIREO" };
                     // LINQ의 ToDictionary 사용
                     Dictionary<string, int> voteData = candidates.ToDictionary(key => key, key => 0);

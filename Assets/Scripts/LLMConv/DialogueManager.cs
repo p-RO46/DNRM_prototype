@@ -28,7 +28,7 @@ public class DialogueManager : MonoBehaviour
     [Header("LLM")]
     [SerializeField] private MessageSystem messageSystem; // LLM에게 Request를 보낼 수 있는 객체. 싱글톤으로 만들어야 하는데...
 
-    [SerializeField] private string initialMessage = "안녕하세요.";
+    [SerializeField] private string initialMessage = "USER에게 먼저 말을 건네시오.";
 
     [SerializeField] private LLMAgent localLlmAgent;
 

@@ -1,10 +1,7 @@
 using Newtonsoft.Json;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.UI;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class DataLoad : MonoBehaviour
 {
@@ -20,6 +17,8 @@ public class DataLoad : MonoBehaviour
     [SerializeField] private Material lampOn;
     [SerializeField] private Material lampOff;
     [SerializeField] private Material lampDown;
+
+    public List<Player> users = new List<Player>();
 
     private void Start()
     {

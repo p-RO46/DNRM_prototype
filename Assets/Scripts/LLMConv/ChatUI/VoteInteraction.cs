@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using LLMUnity;
 using Newtonsoft.Json;
 using System;
@@ -9,6 +10,20 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
+[Serializable]
+public class VoteState
+{
+    public MyState my_state;
+    public string prev_round_administered;
+    public string prev_round_I_voted;
+}
+[Serializable]
+public class MyState
+{
+    public int administered_count;
+    public string physical_state;
+}
 
 // 투표 시 사망자 처리 필요
 [Serializable]
@@ -69,17 +84,15 @@ public class VoteInteraction : MonoBehaviour
     [SerializeField] private LLMAgent llmAgent;
 
     public Player elector;
-    [SerializeField]
-    private List<string> candidates = new List<string>
-    {
-        "USER",
-        "AFURE",
-        "CHENYI",
-        "SIGRID",
-        "VIREO"
-    };
-
+    public List<string> candidates = new List<string>();
     private List<string> revoteCands = new List<string>();
+
+    private Dictionary<int, string> state_per_injection = new Dictionary<int, string>
+    {
+        {0,  "Healthy. There's nothing physically wrong."},
+        {1,  "Feel dizzy. I feel sick and feel like throwing up."},
+        {2, "It's hard to stand. It's hard to breathe. My head hurts like it's breaking."}
+    };
 
     public void OnToggleClicked()
     {
@@ -126,6 +139,8 @@ public class VoteInteraction : MonoBehaviour
         voteResultUI.enabled = false;
         fadeController.FadeIn();
 
+        Debug.Log(string.Join(", ", candidates));
+
         // 1. NPC들의 투표 결과를 받아온다.
         await messageSystem.RequestVote(candidates);
 
@@ -148,6 +163,8 @@ public class VoteInteraction : MonoBehaviour
         {
             foreach (TextMeshProUGUI count in voteCounts)
             {
+                count.text = "0";
+
                 string str = count.gameObject.name;
                 str = str.Substring(0, str.Length - 5).ToUpper();
                 // Debug.Log("UpdateCount: " + str);
@@ -178,12 +195,12 @@ public class VoteInteraction : MonoBehaviour
 
         // 4. 동률을 검사한다.
         revoteCands.Clear();
-        for(int i = 0; i < 5; i++)
+        for(int i = 0; i < candidates.Count; i++)
         {
             // 0표면 동률 검사 xxx
             if (messageSystem.voteResult[i].count == 0) continue;
 
-            for(int j = i + 1; j < 5; j++)
+            for(int j = i + 1; j < candidates.Count; j++)
             {
                 if (messageSystem.voteResult[i].count == messageSystem.voteResult[j].count)
                 {
@@ -274,6 +291,39 @@ public class VoteInteraction : MonoBehaviour
         messageSystem.SaveTextToFile(path, jsonData);
     }
 
+    private void UpdateVoteState()
+    {
+        // Screen Scene이기에 가능.
+        foreach(Player player in dataLoader.users)
+        {
+            string player_name = player.ToString();
+            foreach(VoteResult result in dataLoader.currentProgress.number_of_drug_administered)
+            {
+                if (result.name.Equals(player_name) && result.count < 3)
+                {
+                    VoteState voteState = new VoteState();
+                    voteState.my_state.administered_count = result.count;
+                    voteState.my_state.physical_state = state_per_injection[result.count];
+                    voteState.prev_round_administered = elector.ToString();
+
+                    foreach(Vote vote in messageSystem.vote_reply_state.result)
+                    {
+                        if (vote.voter.Equals(player_name))
+                        {
+                            voteState.prev_round_I_voted = vote.vote;
+                        }
+                    }
+                    
+                    string content = JsonConvert.SerializeObject(voteState);
+                    string path = Path.Combine(Application.persistentDataPath, "Data", player_name, "vote_state.json");
+                    messageSystem.SaveTextToFile(path, content);
+                }
+            }
+        }
+
+
+    }
+
     private IEnumerator LampOnRoutine()
     {
         PlayerLamp electedLamp = new PlayerLamp();
@@ -311,7 +361,7 @@ public class VoteInteraction : MonoBehaviour
 
         // 화면 전환
         yield return StartCoroutine(fadeController.FadeOutAnim());
-        SceneManager.LoadScene("GameScene");
+        ChangeScene();
     }
 
     private IEnumerator FadeAlpha(float start, float end, float duration, Image img)
@@ -325,6 +375,18 @@ public class VoteInteraction : MonoBehaviour
             c.a = Mathf.Lerp(start, end, elapsed / duration);
             img.color = c;
             yield return null;
+        }
+    }
+
+    private void ChangeScene()
+    {
+        if(dataLoader.currentProgress.number_of_drug_administered[0].count >= 3)
+        {
+            SceneManager.LoadScene("EndingScene");
+        }
+        else
+        {
+            SceneManager.LoadScene("GameScene");
         }
     }
 }

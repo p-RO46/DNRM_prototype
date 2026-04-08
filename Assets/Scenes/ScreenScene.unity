@@ -3017,7 +3017,7 @@ MonoBehaviour:
   voteResult: []
   useOpenAI: 1
   localLlmAgent: {fileID: 1289861382}
-  maximumTokens: 100000
+  maximumCount: 30
   totalUsage: 0
   isDialogueFinished: 1
 --- !u!4 &823541941
@@ -3256,6 +3256,14 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: d354e4cd-3015-4430-ae76-496ba6d291ff
     m_ActionName: 'Main/Next[/Keyboard/enter,/Mouse/leftButton,/Keyboard/space]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 790a076d-4b73-4d3c-870e-767af3bf6a73
+    m_ActionName: 'Exit/Game Exit[/Keyboard/escape]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 6c1cf159-6020-4fcf-b73e-8281bf173bec
+    m_ActionName: 'Ending/Next[/Keyboard/space,/Keyboard/enter,/Mouse/leftButton]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -4336,6 +4344,8 @@ MonoBehaviour:
   dialogueManager: {fileID: 483018103}
   dialogueUI: {fileID: 5689341669026450474}
   BGMManager: {fileID: 1977708613}
+  voteInteraction: {fileID: 1174331122}
+  users: 
 --- !u!1 &1289861380
 GameObject:
   m_ObjectHideFlags: 0
@@ -9083,7 +9093,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1152166202413708748}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.7892202
+  m_Size: 0.7892203
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -15356,7 +15366,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3397726686533179595}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 2
   m_Camera: {fileID: 0}

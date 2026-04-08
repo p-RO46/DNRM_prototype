@@ -107,6 +107,56 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Ending",
+            "id": "684136c2-9642-472e-8cbb-260bea9ea6d9",
+            "actions": [
+                {
+                    "name": "Next",
+                    "type": "Button",
+                    "id": "6c1cf159-6020-4fcf-b73e-8281bf173bec",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "c4e75168-3f24-48c4-8499-629f0770304f",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5d7d22bc-a305-414d-aecb-65b269d6542f",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d934da7f-ecbb-454f-b163-0bbf38c99221",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

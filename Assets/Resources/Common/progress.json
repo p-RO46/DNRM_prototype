@@ -1,10 +1,10 @@
 {
     "number_of_drug_administered":[
-        {"USER": 0},
-        {"AFURE": 0},
-        {"CHENYI": 0},
-        {"SIGIRD": 0},
-        {"VIREO": 0}
+        {"name":"USER","count": 0},
+        {"name":"AFURE", "count": 0},
+        {"name":"CHENYI", "count": 0},
+        {"name":"SIGRID", "count": 0},
+        {"name":"VIREO", "count": 0}
     ],
     "current_conversation_partner":"$DEFAULT$",
     "current_round":1

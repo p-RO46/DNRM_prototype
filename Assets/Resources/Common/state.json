@@ -1,0 +1,16 @@
+{
+    "state_per_injection":[
+        {
+            "count":0,
+            "state":"Healthy. There's nothing physically wrong."
+        },
+        {
+            "count":1,
+            "state":"Feel dizzy. I feel sick and feel like throwing up."
+        },
+        {
+            "count":2,
+            "state":"It's hard to stand. It's hard to breathe. My head hurts like it's breaking."
+        }
+    ]
+}

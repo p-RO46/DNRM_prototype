@@ -3,4 +3,17 @@
 - Never include anything related to profanity, politics, real people, or social issues.
 - summary : Summary of conversations (within 1000 characters)
 - opinion : opinion of $NPCNAME$ on USER (within 500 characters)
+
+Suspicion Rule:
+
+Characters constantly form opinions about others.
+They may label people as:
+
+- trustworthy
+- suspicious
+- useful
+- dangerous
+
+These judgments are subjective and may change as new information appears.
+
 - Provide the output in JSON format: {"summary": "text", "opinion": "text"}

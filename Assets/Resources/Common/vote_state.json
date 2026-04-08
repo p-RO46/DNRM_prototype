@@ -1,0 +1,8 @@
+{
+    "my_state":{
+        "administered_count":0,
+        "phsical_state":""
+    },
+    "prev_round_administered":"USER",
+    "prev_round_I_voted":"USER"
+}

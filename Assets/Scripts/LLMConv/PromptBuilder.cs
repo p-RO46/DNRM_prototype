@@ -108,19 +108,23 @@ public static class PromptBuilder
         string _conversation_rules = Resources.Load<TextAsset>("Common/conversation_rules").text;
         _conversation_rules = _conversation_rules.Replace("$NPCNAME$", npcName);
 
+        string path = Path.Combine(Application.persistentDataPath, "Data", npcName, "vote_state.json");
+        string _vote_state = "### Current Vote State\n\n" + ReadFileToText(path) + "\n";
+
         sb.Append(_role.text);
         sb.Append(_situation.text);
         sb.Append(_progress);
 
         sb.Append(_persona.text);
+        sb.Append(_vote_state);
         sb.Append(_memory);
         sb.Append(_prevConv);
+
+        sb.Append(_vote_state);
 
         sb.Append(_log);
 
         sb.Append(_conversation_rules);
-
-        
 
         return sb.ToString();
     }
@@ -161,6 +165,14 @@ public static class PromptBuilder
         string _memoryA = BuildMemoryPrompt(npcNameA, round);
         string _memoryB = BuildMemoryPrompt(npcNameB, round);
 
+
+        string pathA = Path.Combine(Application.persistentDataPath, "Data", npcNameA, "vote_state.json");
+        string _vote_stateA = "### Current Vote State\n\n" + ReadFileToText(pathA) + "\n";
+
+        string pathB = Path.Combine(Application.persistentDataPath, "Data", npcNameB, "vote_state.json");
+        string _vote_stateB = "### Current Vote State\n\n" + ReadFileToText(pathB) + "\n";
+
+
         sb.Append(_role.text);
         sb.Append(_situation.text);
         sb.Append(_progress);
@@ -172,12 +184,14 @@ public static class PromptBuilder
 
         sb.Append("\n### **Persona A**\n");
         sb.Append(_personaA.text);
+        sb.Append(_vote_stateA);
         sb.Append(_memoryA);
         sb.Append("\n### **Opinion of Persona A on Perona B**\n");
         sb.Append(_opinionAB);
 
         sb.Append("\n### **Persona B**\n");
         sb.Append(_personaB.text);
+        sb.Append(_vote_stateB);
         sb.Append(_memoryB);
         sb.Append("\n### **Opinion of Persona B on Perona A**\n");
         sb.Append(_opinionBA);
@@ -202,7 +216,7 @@ public static class PromptBuilder
         _progress = _progress.Replace("$DEFAULT$", $"USER");
 
         // Debug.Log(npcName);
-        TextAsset _persona_short = Resources.Load<TextAsset>($"{npcName}/persona_short");
+        TextAsset _persona = Resources.Load<TextAsset>($"{npcName}/persona");
         // TextAsset _memory_status = Resources.Load<TextAsset>("Data/Example");
         // TextAsset _log = Resources.Load<TextAsset>("Data/Example");
 
@@ -217,11 +231,15 @@ public static class PromptBuilder
 
         string _memory = _memoryC + BuildMemoryPrompt(npcName, round);
 
+        string pathV = Path.Combine(Application.persistentDataPath, "Data", npcName, "vote_state.json");
+        string _vote_state = "### Current Vote State\n\n" + ReadFileToText(pathV) + "\n";
+
         sb.Append(_role);
         sb.Append(_situation.text);
         sb.Append(_progress);
         sb.Append("\n### NPC Persona\n\n");
-        sb.Append(_persona_short.text);
+        sb.Append(_persona.text);
+        sb.Append(_vote_state);
         sb.Append(_memory);
         sb.Append("\n### **Log**\n\n");
         sb.Append(_log);
@@ -242,21 +260,26 @@ public static class PromptBuilder
         TextAsset _situation = Resources.Load<TextAsset>("Common/situation");
         string _progress = ReadFileProgress();
         _progress = _progress.Replace("$DEFAULT$", $"-");
-        // Debug.Log(npcName);
 
-        List<Player> player = new List<Player> { Player.AFURE, Player.CHENYI, Player.SIGRID, Player.VIREO, Player.USER };
         string[] playerFeature = new string[5];
 
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < candidates.Count; i++)
         {
-            string fullStr = $"**{player[i].ToString()}**\n";
-            fullStr += Resources.Load<TextAsset>($"{player[i].ToString()}/persona_short").text + "\n\n";
-            for (int j = i + 1; j < 5; j++)
+            if (candidates[i].Equals("USER")) continue;
+
+            string fullStr = $"**{candidates[i]}**\n";
+            fullStr += Resources.Load<TextAsset>($"{candidates[i]}/persona_short").text + "\n\n";
+
+            path = Path.Combine(Application.persistentDataPath, "Data", candidates[i], "vote_state.json");
+            string _vote_state = "### Current Vote State\n\n" + ReadFileToText(path) + "\n";
+            fullStr += _vote_state;
+   
+            for (int j = i + 1; j < candidates.Count; j++)
             {
-                path = Path.Combine(Application.persistentDataPath, "Data", $"{player[i].ToString()}", "summary", $"{player[j].ToString()}.txt");
-                fullStr += $"**Summary of {player[i].ToString()} & {player[j].ToString()} 's conversation**\n" + ReadFileToText(path) + "\n\n";
-                path = Path.Combine(Application.persistentDataPath, "Data", $"{player[i].ToString()}", "opinion", $"{player[j].ToString()}.txt");
-                fullStr += $"**{player[i].ToString()}'s opinion to {player[j].ToString()}**\n" + ReadFileToText(path) + "\n\n";
+                path = Path.Combine(Application.persistentDataPath, "Data", $"{candidates[i]}", "summary", $"{candidates[j]}.txt");
+                fullStr += $"**Summary of {candidates[i]} & {candidates[j]} 's conversation**\n" + ReadFileToText(path) + "\n\n";
+                path = Path.Combine(Application.persistentDataPath, "Data", $"{candidates[i]}", "opinion", $"{candidates[j]}.txt");
+                fullStr += $"**{candidates[i]}'s opinion to {candidates[j]}**\n" + ReadFileToText(path) + "\n\n";
             }
             playerFeature[i] = fullStr;
         }
