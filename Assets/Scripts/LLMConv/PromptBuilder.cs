@@ -61,8 +61,24 @@ public static class PromptBuilder
         return result;
     }
 
+    private static string BuildMemoryPrompt(string npcName, int round)
+    {
+        string _memory_npc = "";
+        for (int i = 1; i < round; i++)
+        {
+            _memory_npc = Resources.Load<TextAsset>($"{npcName}/memory/round_{i}").text;
+        }
+        string _memory_npc_new = Resources.Load<TextAsset>($"{npcName}/memory/round_{round}").text;
+
+        string _memory = $"\n### {npcName}'s Personal Memory\n" +
+            $"**Previous Memory**\n{_memory_npc}\n\n" +
+            $"**New Memory for this round**\n{_memory_npc_new}\n\n";
+
+        return _memory;
+    }
+
     #region Dialogue Prompt
-    public static string BuildDialoguePrompt(NpcInformation npc, int round)
+    public static string BuildDialoguePrompt(NpcInformation npc, int round, List<string> tempLog)
     {
         StringBuilder sb = new StringBuilder();
         string npcName = npc.player.ToString();
@@ -76,17 +92,16 @@ public static class PromptBuilder
         // Debug.Log(npcName);
         TextAsset _persona = Resources.Load<TextAsset>($"{npcName}/persona");
 
-        string _memory_common = "";
-        for (int i= 1; i <= round; i++)
-        {
-            _memory_common += Resources.Load<TextAsset>($"Common/memory/round_{round}").text + "\n\n";
-        }
-        string _memory_npc = Resources.Load<TextAsset>($"{npcName}/memory/round_{round}").text;
+        string _memory_common = Resources.Load<TextAsset>($"Common/memory/round_{round}").text;
+        string _memoryC = $"\n### Common Memory\n\n{_memory_common}\n\n";
 
-        string _memory = $"\n### Common Memory\n\n{_memory_common}\n\n### {npcName}'s Personal Memory\n\n{_memory_npc}\n\n";
+        string _memory = _memoryC + BuildMemoryPrompt(npcName, round);
 
         // TextAsset _memory_status = Resources.Load<TextAsset>("Data/Example");
-        // TextAsset _log = Resources.Load<TextAsset>("Data/Example"); 얘는 user_input 사이드?
+        // TextAsset _log = Resources.Load<TextAsset>("Data/Example");
+        string _log = string.Join("\n", tempLog);
+        _log = $"### Log\n\n{_log}\n\n";
+
         string _prevConv = ReadPrevConv(npcName);
         /// Log: local은 자동저장인데, OpenAI는 아님
         /// 데모는 local이니까 일단나중에 (어차피 OpenAI로 할거면 서버에다 넣을거)
@@ -101,7 +116,11 @@ public static class PromptBuilder
         sb.Append(_memory);
         sb.Append(_prevConv);
 
+        sb.Append(_log);
+
         sb.Append(_conversation_rules);
+
+        
 
         return sb.ToString();
     }
@@ -139,11 +158,8 @@ public static class PromptBuilder
         string _memory_common = Resources.Load<TextAsset>($"Common/memory/round_{round}").text;
         string _memoryC = $"\n### Common Memory\n\n{_memory_common}\n\n";
 
-        string _memory_npcA = Resources.Load<TextAsset>($"{npcNameA}/memory/round_{round}").text;
-        string _memory_npcB = Resources.Load<TextAsset>($"{npcNameB}/memory/round_{round}").text;
-
-        string _memoryA = $"\n### {npcNameA}'s Personal Memory\n\n{_memory_npcA}\n\n";
-        string _memoryB = $"\n### {npcNameB}'s Personal Memory\n\n{_memory_npcB}\n\n";
+        string _memoryA = BuildMemoryPrompt(npcNameA, round);
+        string _memoryB = BuildMemoryPrompt(npcNameB, round);
 
         sb.Append(_role.text);
         sb.Append(_situation.text);
@@ -197,9 +213,9 @@ public static class PromptBuilder
         _summarize_rules = _summarize_rules.Replace("$NPCNAME$", npcName);
 
         string _memory_common = Resources.Load<TextAsset>($"Common/memory/round_{round}").text;
-        string _memory_npc = Resources.Load<TextAsset>($"{npcName}/memory/round_{round}").text;
+        string _memoryC = $"\n### Common Memory\n\n{_memory_common}\n\n";
 
-        string _memory = $"\n### Common Memory\n\n{_memory_common}\n\n### {npcName}'s Personal Memory\n\n{_memory_npc}\n\n";
+        string _memory = _memoryC + BuildMemoryPrompt(npcName, round);
 
         sb.Append(_role);
         sb.Append(_situation.text);

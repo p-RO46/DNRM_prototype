@@ -35,17 +35,6 @@ public class DialogueManager : MonoBehaviour
     private List<DialogueGroup> groups = new List<DialogueGroup>();
     private Player restMem;
 
-    public List<Player> users = new List<Player>();
-
-    private async void Start()
-    {
-        // users = new List<string> { "USER", "CHENYI", "SIGRID", "VIREO", "AFURE" };
-        dialogueUI.enabled = false;
-
-        BGMManager.ChangeClip(AC.BGM_EMPTY);
-        await GenerateSchedule(users);
-    }
-
     public async Awaitable GenerateSchedule(List<Player> originalUsers)
     {
         List<Player> participants = new List<Player>(originalUsers);
@@ -131,6 +120,7 @@ public class DialogueManager : MonoBehaviour
                 fadeController.FadeIn();
                 BGMManager.ChangeClip(AC.BGM_EMPTY);
                 messageSystem.tokenUsage.text = "0";
+                messageSystem.totalUsage = 0;
                 await messageSystem.DialogueSave();
             }
 

@@ -1849,7 +1849,6 @@ MonoBehaviour:
   messageSystem: {fileID: 823541940}
   initialMessage: "\uC548\uB155\uD558\uC138\uC694."
   localLlmAgent: {fileID: 1289861382}
-  users: 0000000002000000030000000400000001000000
 --- !u!4 &483018104
 Transform:
   m_ObjectHideFlags: 0
@@ -3005,7 +3004,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MessageSystem
   playerDB: {fileID: 11400000, guid: 5b91cc0c9dca8c841b6f95c81d0de858, type: 2}
-  dataLoader: {fileID: 1286041659}
+  dataLoader: {fileID: 1286041661}
   currentNpc: {fileID: 11400000, guid: c7f0a57af1ddce74c819a8e7136a3f27, type: 2}
   npcImage: {fileID: 1307416901}
   inputField: {fileID: 7630043493947057618}
@@ -3016,9 +3015,10 @@ MonoBehaviour:
   logContent: {fileID: 891506514}
   tokenUsage: {fileID: 505356271}
   voteResult: []
-  useOpenAI: 0
+  useOpenAI: 1
   localLlmAgent: {fileID: 1289861382}
-  maximumTokens: 1000
+  maximumTokens: 100000
+  totalUsage: 0
   isDialogueFinished: 1
 --- !u!4 &823541941
 Transform:
@@ -3745,7 +3745,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6b60ddb130cfd044a678c5f2a5cff9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoteInteraction
-  dataLoader: {fileID: 1286041659}
+  dataLoader: {fileID: 1286041661}
   voteMainUI: {fileID: 1174331121}
   fadeController: {fileID: 1385731619439448619}
   electorUI: {fileID: 987994498}
@@ -4248,7 +4248,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1286041660}
-  - component: {fileID: 1286041659}
+  - component: {fileID: 1286041661}
   m_Layer: 0
   m_Name: DataLoader
   m_TagString: Untagged
@@ -4256,7 +4256,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1286041659
+--- !u!4 &1286041660
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1286041658}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1286041661
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4265,14 +4280,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1286041658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a03001aa3ec2614cb0901eced15cefd, type: 3}
+  m_Script: {fileID: 11500000, guid: 03ec9945f22e0e44881e13b265d65602, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DataLoad
+  m_EditorClassIdentifier: Assembly-CSharp::DataLoadScreen
   currentProgress:
     number_of_drug_administered: []
     current_conversation_partner: 
     current_round: 0
-  currentRound: 0
+  currentRound: 1
   npcInfo:
   - {fileID: 11400000, guid: d6179777d67663b49aeed4f5d36f5acc, type: 2}
   - {fileID: 11400000, guid: c7f0a57af1ddce74c819a8e7136a3f27, type: 2}
@@ -4318,21 +4333,9 @@ MonoBehaviour:
   lampOn: {fileID: 2100000, guid: 0b4a9da385aff4949807b933199577bd, type: 2}
   lampOff: {fileID: 2100000, guid: 4313aeb35f0b91042a228e17a5f4d4f4, type: 2}
   lampDown: {fileID: 2100000, guid: 77a8c0ed322d29f47b93477801fc3d82, type: 2}
---- !u!4 &1286041660
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1286041658}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  dialogueManager: {fileID: 483018103}
+  dialogueUI: {fileID: 5689341669026450474}
+  BGMManager: {fileID: 1977708613}
 --- !u!1 &1289861380
 GameObject:
   m_ObjectHideFlags: 0

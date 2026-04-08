@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
+using static UnityEngine.Audio.ProcessorInstance;
 
 [Serializable]
 public class DialogueReply
@@ -19,8 +20,9 @@ public class DialogueReply
 [Serializable]
 public class ChatRequest
 {
+    public string user_id;
+    public string system;
     public string user_input;
-    public string persona;
 }
 
 // 서버에서 받을 데이터 구조
@@ -29,6 +31,9 @@ public class ChatResponse
 {
     public string reply;
     public bool filtered;
+    public int prompt_tokens;
+    public int completion_tokens;
+    public int total_tokens;
 }
 
 [Serializable]
@@ -83,6 +88,7 @@ public class MessageSystem : MonoBehaviour
     [SerializeField] private bool useOpenAI = false; // false: local, true: OpenAI
     [SerializeField] private LLMAgent localLlmAgent;
     [SerializeField] private int maximumTokens = 5000;
+    public int totalUsage = 0;
 
     private INpcChatClient client;
     private bool isProcessing = false; // 중복 요청 방지 플래그
@@ -107,18 +113,35 @@ public class MessageSystem : MonoBehaviour
         inputField.enabled = true;
     }
 
-    private void DialogueFinished()
+    private void DialogueFinished(int total_tokens)
     {
-        string result = string.Join("\n", tempLog);
-        List<int> tokens = localLlmAgent.llm.llmService.Tokenize(result);
-        tokenUsage.text = tokens.Count.ToString();
-        Debug.Log($"텍스트 토큰 수: {tokens.Count}");
-
-        if (tokens.Count > maximumTokens)
+        if (useOpenAI)
         {
-            // isDialogueFinished = true;
-            inputField.enabled = false;
-            tokenUsage.color = Color.red;
+            totalUsage += total_tokens;
+            tokenUsage.text = totalUsage.ToString();
+            Debug.Log($"텍스트 토큰 수: {totalUsage}");
+
+            if (totalUsage > maximumTokens)
+            {
+                // isDialogueFinished = true;
+                inputField.enabled = false;
+                tokenUsage.color = Color.red;
+            }
+        }
+        else
+        {
+            string result = string.Join("\n", tempLog);
+            List<int> tokens = localLlmAgent.llm.llmService.Tokenize(result);
+            tokenUsage.text = tokens.Count.ToString();
+            Debug.Log($"텍스트 토큰 수: {tokens.Count}");
+
+            if (tokens.Count > maximumTokens)
+            {
+                // isDialogueFinished = true;
+                inputField.enabled = false;
+                tokenUsage.color = Color.red;
+
+            }
         }
     }
 
@@ -138,8 +161,9 @@ public class MessageSystem : MonoBehaviour
         if (useOpenAI)
         {
             // json 변환은 항상 요청하는 곳에서
-            // ChatRequest requestData = new ChatRequest { user_input = input, persona = persona };
-            // jsonData = JsonUtility.ToJson(requestData);
+            string systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound, tempLog);
+            ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = input };
+            jsonData = JsonUtility.ToJson(requestData);
         }
         else
         {
@@ -215,7 +239,7 @@ public class MessageSystem : MonoBehaviour
                     tempLog.Add(content1);
                     tempLog.Add(content2);
 
-                    DialogueFinished(); // 토큰 사용량 체크하기.
+                    DialogueFinished(response.total_tokens); // 토큰 사용량 체크하기.
                 }
                 catch (System.Exception e)
                 {
@@ -254,7 +278,6 @@ public class MessageSystem : MonoBehaviour
         currentNpc = playerDB.dictionary[current];
         currentNpcName = currentNpc.player.ToString();
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound);
         npcImage.sprite = currentNpc.expressions[(int)Expression.DEFAULT];
         nameField.text = $"[{currentNpc.npcName}]";
 
@@ -268,11 +291,13 @@ public class MessageSystem : MonoBehaviour
         if (useOpenAI)
         {
             // json 변환은 항상 요청하는 곳에서
-            // ChatRequest requestData = new ChatRequest { user_input = input, persona = persona };
-            // jsonData = JsonUtility.ToJson(requestData);
+            string systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound, tempLog);
+            ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = input };
+            jsonData = JsonUtility.ToJson(requestData);
         }
         else
         {
+            localLlmAgent.systemPrompt = PromptBuilder.BuildDialoguePrompt(currentNpc, dataLoader.currentRound, tempLog);
             jsonData = input;
         }
 
@@ -362,12 +387,21 @@ public class MessageSystem : MonoBehaviour
         // 근데 이게 다른거 처리중일때도 무시해야하니까? MessageSystem에 묶어야 할 것 같긴 함
         if (isProcessing) return;
 
-        await localLlmAgent.ClearHistory();
+        string jsonData = "";
 
-        localLlmAgent.systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B, dataLoader.currentRound);
-
-        //string persona = currentNpc.persona.text;
-        string jsonData = "Please provide the simulation result in JSON format.";
+        if (useOpenAI)
+        {
+            // json 변환은 항상 요청하는 곳에서
+            string systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B, dataLoader.currentRound);
+            ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = "Please provide the simulation result in JSON format." };
+            jsonData = JsonUtility.ToJson(requestData);
+        }
+        else
+        {
+            await localLlmAgent.ClearHistory();
+            localLlmAgent.systemPrompt = PromptBuilder.BuildSimulatePrompt(A, B, dataLoader.currentRound);
+            jsonData = "Please provide the simulation result in JSON format.";
+        }
 
         try
         {
@@ -458,12 +492,20 @@ public class MessageSystem : MonoBehaviour
         // 1. 이미 처리 중이면 무시
         if (isProcessing) return;
 
-        await localLlmAgent.ClearHistory();
-
-        localLlmAgent.systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc, dataLoader.currentRound);
-
-        //string persona = currentNpc.persona.text;
-        string jsonData = "Please provide the summarization result in JSON format.";
+        string jsonData = "";
+        if (useOpenAI)
+        {
+            // json 변환은 항상 요청하는 곳에서
+            string systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc, dataLoader.currentRound);
+            ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = "Please provide the summarization result in JSON format." };
+            jsonData = JsonUtility.ToJson(requestData);
+        }
+        else
+        {
+            await localLlmAgent.ClearHistory();
+            localLlmAgent.systemPrompt = PromptBuilder.BuildSummarizePrompt(currentNpc, dataLoader.currentRound);
+            jsonData = "Please provide the summarization result in JSON format.";
+        }
 
         try
         {
@@ -564,10 +606,20 @@ public class MessageSystem : MonoBehaviour
         // 1. 이미 처리 중이면 무시
         if (isProcessing) return;
 
-        await localLlmAgent.ClearHistory();
-
-        localLlmAgent.systemPrompt = PromptBuilder.BuildVotePrompt(candidates);
-        string jsonData = "Please provide the vote result in JSON format.";
+        string jsonData = "";
+        if (useOpenAI)
+        {
+            // json 변환은 항상 요청하는 곳에서
+            string systemPrompt = PromptBuilder.BuildVotePrompt(candidates);
+            ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = "Please provide the vote result in JSON format." };
+            jsonData = JsonUtility.ToJson(requestData);
+        }
+        else
+        {
+            await localLlmAgent.ClearHistory();
+            localLlmAgent.systemPrompt = PromptBuilder.BuildVotePrompt(candidates);
+            jsonData = "Please provide the vote result in JSON format.";
+        }
 
         try
         {

@@ -1,17 +1,19 @@
 using Newtonsoft.Json;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 public class DataLoad : MonoBehaviour
 {
     [Header("Saved Data")]
     public ProgressJson currentProgress = new ProgressJson();
-    public int currentRound;
+    public int currentRound = 1;
 
     [Header("Npc Information")]
-    [SerializeField] private List<NpcInformation> npcInfo = new List<NpcInformation>();
+    [SerializeField] protected List<NpcInformation> npcInfo = new List<NpcInformation>();
 
     [Header("Lamp UI")]
     [SerializeField] private List<PlayerLamp> playerLamp = new List<PlayerLamp>();
@@ -74,7 +76,7 @@ public class DataLoad : MonoBehaviour
         }
     }
 
-    private void LampOn()
+    protected void LampOn()
     {
         for(int i = 0; i< npcInfo.Count; i++)
         {
