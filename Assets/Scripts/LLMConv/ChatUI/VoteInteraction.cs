@@ -158,13 +158,16 @@ public class VoteInteraction : MonoBehaviour
         fadeController.FadeOut();
         voteResultUI.enabled = true;
 
+        foreach (TextMeshProUGUI count in voteCounts)
+        {
+            count.text = "0";
+        }
+
         // 2-1-1. 숫자를 업데이트 해 준다.
         foreach (VoteResult result in messageSystem.voteResult)
         {
             foreach (TextMeshProUGUI count in voteCounts)
             {
-                count.text = "0";
-
                 string str = count.gameObject.name;
                 str = str.Substring(0, str.Length - 5).ToUpper();
                 // Debug.Log("UpdateCount: " + str);
@@ -289,6 +292,7 @@ public class VoteInteraction : MonoBehaviour
         string jsonData = JsonUtility.ToJson(progress);
         // Debug.Log(jsonData);
         messageSystem.SaveTextToFile(path, jsonData);
+        UpdateVoteState();
     }
 
     private void UpdateVoteState()

@@ -39,9 +39,27 @@ public class ChattingUI : MonoBehaviour
         StartCoroutine(PrintTextRoutine(message));
     }
 
+    public void PrintStop()
+    {
+        StopAllCoroutines();
+    }
+
     // 문자열 받아서 UI에 순차적으로 띄우는거
     private IEnumerator PrintTextRoutine(string message)
     {
+        textBox = GetComponent<TextMeshProUGUI>();
+        if (textBox == null)
+        {
+            Debug.LogError("ChatText 컴포넌트가 할당되지 않았습니다!");
+            yield break;
+        }
+
+        // 2. 출력할 문자열이 비어있는지 확인
+        if (string.IsNullOrEmpty(message))
+        {
+            Debug.LogWarning("출력할 텍스트가 비어있습니다.");
+            yield break;
+        }
         // string fullText = message.Replace("\r\n", "\n");
         sb.Clear();
         for(int i = 0; i < message.Length; i++)
