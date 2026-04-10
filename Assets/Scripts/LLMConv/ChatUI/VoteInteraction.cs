@@ -300,12 +300,18 @@ public class VoteInteraction : MonoBehaviour
         // Screen Scene이기에 가능.
         foreach(Player player in dataLoader.users)
         {
+            if (player == Player.USER) continue;
+
             string player_name = player.ToString();
             foreach(VoteResult result in dataLoader.currentProgress.number_of_drug_administered)
             {
                 if (result.name.Equals(player_name) && result.count < 3)
                 {
-                    VoteState voteState = new VoteState();
+                    VoteState voteState = new VoteState { my_state = new MyState() };
+                    if(result == null)
+                    {
+                        Debug.LogError("result가 Null입니다.");
+                    }
                     voteState.my_state.administered_count = result.count;
                     voteState.my_state.physical_state = state_per_injection[result.count];
                     voteState.prev_round_administered = elector.ToString();
@@ -324,8 +330,6 @@ public class VoteInteraction : MonoBehaviour
                 }
             }
         }
-
-
     }
 
     private IEnumerator LampOnRoutine()
@@ -340,28 +344,24 @@ public class VoteInteraction : MonoBehaviour
             }
         }
 
-        if(electedLamp.lampCount < 2)
+        int lampNum = 0;
+        foreach (VoteResult result in dataLoader.currentProgress.number_of_drug_administered)
         {
-            // 살아있음
-            Image lampImage = electedLamp.lampImages[electedLamp.lampCount++];
-            yield return StartCoroutine(FadeAlpha(1, 0, 1f, lampImage));
-            lampImage.material = lampOn;
-            yield return StartCoroutine(FadeAlpha(0, 0.5f, 1f, lampImage));
-            yield return StartCoroutine(FadeAlpha(0.5f, 0.2f, 0.5f, lampImage));
-            yield return StartCoroutine(FadeAlpha(0.2f, 1, 0.5f, lampImage));
-        }
-        else
-        {
-            // 죽음
-            electedLamp.nameText.color = new Color(0.2f, 0.2f, 0.2f, 1f);
-            for(int i = electedLamp.lampImages.Count - 1; i >= 0; i++)
+            Debug.Log(result.name);
+            if (result.name.Equals(elector.ToString()))
             {
-                Image lampImage = electedLamp.lampImages[i];
-                yield return StartCoroutine(FadeAlpha(1, 0, 0.7f, lampImage));
-                lampImage.material = lampDown;
-                yield return StartCoroutine(FadeAlpha(0, 1f, 0.3f, lampImage));
+                Debug.Log(result.count);
+                lampNum = result.count - 1;
+                break;
             }
         }
+
+        Image lampImage = electedLamp.lampImages[lampNum];
+        yield return StartCoroutine(FadeAlpha(1, 0, 1f, lampImage));
+        lampImage.material = lampOn;
+        yield return StartCoroutine(FadeAlpha(0, 0.5f, 1f, lampImage));
+        yield return StartCoroutine(FadeAlpha(0.5f, 0.2f, 0.3f, lampImage));
+        yield return StartCoroutine(FadeAlpha(0.2f, 1, 0.2f, lampImage));
 
         // 화면 전환
         yield return StartCoroutine(fadeController.FadeOutAnim());

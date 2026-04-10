@@ -80,14 +80,14 @@ public class MessageSystem : MonoBehaviour
     [SerializeField] private PoolManager poolManager; // 프리팹 꺼내다 쓰는 곳
     [SerializeField] private GameObject logBoxPrefab;
     [SerializeField] private Transform logContent;
-    [SerializeField] public TextMeshProUGUI tokenUsage;
+    public TextMeshProUGUI tokenUsage;
     // NPC들의 투표 결과를 반환
     public List<VoteResult> voteResult = new List<VoteResult>();
 
     [Header("LLM Option")]
     [SerializeField] private bool useOpenAI = false; // false: local, true: OpenAI
     [SerializeField] private LLMAgent localLlmAgent;
-    [SerializeField] private int maximumCount = 30;
+    public int maximumCount = 20;
     public int totalUsage = 0;
 
     private INpcChatClient client;
@@ -111,6 +111,7 @@ public class MessageSystem : MonoBehaviour
             client = new LocalNpcChatClient(localLlmAgent);
         }
 
+        tokenUsage.text = $"Dialogue Count: 0 /{maximumCount}";
         inputField.enabled = true;
     }
 
@@ -118,6 +119,8 @@ public class MessageSystem : MonoBehaviour
     {
         // 대화 횟수로.
         totalUsage++;
+        tokenUsage.text = $"Dialogue Count: {totalUsage}/{maximumCount}";
+
         if (totalUsage > maximumCount)
         {
             // isDialogueFinished = true;
@@ -594,6 +597,7 @@ public class MessageSystem : MonoBehaviour
         {
             // json 변환은 항상 요청하는 곳에서
             string systemPrompt = PromptBuilder.BuildVotePrompt(candidates);
+            Debug.Log(systemPrompt);
             ChatRequest requestData = new ChatRequest { user_id = SystemInfo.deviceUniqueIdentifier, system = systemPrompt, user_input = "Please provide the vote result in JSON format." };
             jsonData = JsonUtility.ToJson(requestData);
         }
@@ -635,11 +639,21 @@ public class MessageSystem : MonoBehaviour
                 {
                     VoteReply replyData = JsonConvert.DeserializeObject<VoteReply>(reply_json);
                     vote_reply_state = replyData;
-                    // string[] keys = { "USER", "AFURE", "CHENYI", "SIGRID", "VIREO" };
-                    // LINQ의 ToDictionary 사용
                     Dictionary<string, int> voteData = candidates.ToDictionary(key => key, key => 0);
-                    foreach(Vote v in replyData.result)
+                    foreach (Vote v in replyData.result)
                     {
+                        // Debug.Log($"voter: {v.voter}, vote: {v.vote}");
+                        bool isAlive = false;
+                        foreach(Player player in dataLoader.users)
+                        {
+                            if (v.voter.Equals(player.ToString()))
+                            {
+                                isAlive = true;
+                            }
+                        }
+
+                        if (!isAlive) continue;
+                        
                         if (voteData.ContainsKey(v.vote))
                         {
                             // 이미 있으면 1표 증가

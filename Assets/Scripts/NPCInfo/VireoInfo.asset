@@ -16,9 +16,9 @@ MonoBehaviour:
   npcName: Vireo
   isAlive: 1
   expressions:
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 1855247192, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 21300000, guid: b633de678889af04fbd27b985d60c392, type: 3}
+  - {fileID: 21300000, guid: 7a0306490ad618a47b77bca62a2e0344, type: 3}
+  - {fileID: 21300000, guid: e9ff1f99c2b89f94a89000a70be4be1f, type: 3}
+  - {fileID: 21300000, guid: bc0aa42a6738e5049bd370b26dfba999, type: 3}
+  - {fileID: 21300000, guid: c18c1262dcab53647aadd0993dadad76, type: 3}
+  - {fileID: 21300000, guid: cada0ea2fa3268646a8b6723eb25692d, type: 3}

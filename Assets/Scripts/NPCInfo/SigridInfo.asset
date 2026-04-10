@@ -16,9 +16,9 @@ MonoBehaviour:
   npcName: Sigrid
   isAlive: 1
   expressions:
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
-  - {fileID: 315966434, guid: 97692449d133aef408fbf99020d93463, type: 3}
+  - {fileID: 21300000, guid: 083595337c650cb48b0d7d40e4f084a8, type: 3}
+  - {fileID: 21300000, guid: e0cde9fa12e6a7643813551450de852b, type: 3}
+  - {fileID: 21300000, guid: 0eb3faaa0f2c2b04f913b05e43349225, type: 3}
+  - {fileID: 21300000, guid: 86940e197a2f1764483fc71a022c5c32, type: 3}
+  - {fileID: 21300000, guid: 7ce9306de1a768b4e846daccb467592d, type: 3}
+  - {fileID: 21300000, guid: 135315a0383b3a34090d1edcbd209cf3, type: 3}

@@ -120,8 +120,6 @@ public static class PromptBuilder
         sb.Append(_memory);
         sb.Append(_prevConv);
 
-        sb.Append(_vote_state);
-
         sb.Append(_log);
 
         sb.Append(_conversation_rules);

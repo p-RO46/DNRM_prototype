@@ -119,7 +119,7 @@ public class DialogueManager : MonoBehaviour
 
                 fadeController.FadeIn();
                 BGMManager.ChangeClip(AC.BGM_EMPTY);
-                messageSystem.tokenUsage.text = "0";
+                messageSystem.tokenUsage.text = $"Dialogue Count: 0 /{messageSystem.maximumCount}";
                 messageSystem.totalUsage = 0;
                 await messageSystem.DialogueSave();
             }
